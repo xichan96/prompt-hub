@@ -37,7 +37,7 @@ type SettingFieldMeta struct {
 	ALL       field.Asterisk
 	Group     field.String
 	Key       field.String
-	Value     field.Field
+	Value     field.String
 	CreatedAt field.Time
 	UpdatedAt field.Time
 }

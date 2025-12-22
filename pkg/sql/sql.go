@@ -5,7 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/xichan96/prompt-hub/pkg/error/ec"
+	"github.com/xichan96/prompt-hub/pkg/ec"
 )
 
 type Transaction interface {

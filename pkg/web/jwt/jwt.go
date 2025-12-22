@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/xichan96/prompt-hub/pkg/error/ec"
+	"github.com/xichan96/prompt-hub/pkg/ec"
 	"github.com/xichan96/prompt-hub/pkg/log"
 	"github.com/xichan96/prompt-hub/pkg/std/str"
 )

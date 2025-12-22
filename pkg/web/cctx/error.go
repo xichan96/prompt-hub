@@ -3,7 +3,7 @@ package cctx
 import (
 	"context"
 
-	"github.com/xichan96/prompt-hub/pkg/error/ec"
+	"github.com/xichan96/prompt-hub/pkg/ec"
 )
 
 const (

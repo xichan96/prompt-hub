@@ -1,6 +1,6 @@
 package web
 
-import "github.com/xichan96/prompt-hub/pkg/error/ec"
+import "github.com/xichan96/prompt-hub/pkg/ec"
 
 type ResponseBody struct {
 	*ec.ErrorCode

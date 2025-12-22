@@ -2,7 +2,7 @@ package gx
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/xichan96/prompt-hub/pkg/error/ec"
+	"github.com/xichan96/prompt-hub/pkg/ec"
 )
 
 func HealthAPI(c *gin.Context) {

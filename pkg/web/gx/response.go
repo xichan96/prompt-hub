@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/xichan96/prompt-hub/pkg/error/ec"
+	"github.com/xichan96/prompt-hub/pkg/ec"
 	"github.com/xichan96/prompt-hub/pkg/log"
 	"github.com/xichan96/prompt-hub/pkg/web"
 	"github.com/xichan96/prompt-hub/pkg/web/cctx"

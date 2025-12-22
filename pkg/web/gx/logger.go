@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xichan96/prompt-hub/pkg/error/ec"
+	"github.com/xichan96/prompt-hub/pkg/ec"
 	"github.com/xichan96/prompt-hub/pkg/log"
 	"github.com/xichan96/prompt-hub/pkg/std/cmath"
 	"github.com/xichan96/prompt-hub/pkg/std/str"

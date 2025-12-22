@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	sql "github.com/go-sql-driver/mysql"
-	"github.com/xichan96/prompt-hub/pkg/error/ec"
+	"github.com/xichan96/prompt-hub/pkg/ec"
 	"gorm.io/gorm"
 )
 

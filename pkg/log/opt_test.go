@@ -19,7 +19,7 @@ func TestWithFile(t *testing.T) {
 	l := NewLogger(
 		WithEnableFile(true),
 		WithFileMaxBackups(10),
-		WithFilename("logx/test.log"),
+		WithFilename("log/test.log"),
 		WithFileMaxSize(2),
 		WithDisableConsole(true),
 		//WithFileMaxAge()
