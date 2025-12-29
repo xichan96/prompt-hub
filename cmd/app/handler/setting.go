@@ -8,6 +8,15 @@ import (
 	"github.com/xichan96/prompt-hub/pkg/web/gx"
 )
 
+// CreateSettingAPI       创建配置 godoc
+// @Summary               创建配置
+// @Description           创建新配置项
+// @Tags                  配置管理
+// @Accept                json
+// @Produce               json
+// @Param                 body    body        appdto.CreateSettingReq true    "配置信息"
+// @Success               200     {object}    appdto.EmptyResponse         "创建成功"
+// @Router                /api/settings [post]
 func CreateSettingAPI(c *gin.Context) {
 	var req appdto.CreateSettingReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -22,6 +31,15 @@ func CreateSettingAPI(c *gin.Context) {
 	gx.JSONSuccess(c, nil)
 }
 
+// UpdateSettingAPI       更新配置 godoc
+// @Summary                更新配置
+// @Description            更新配置项
+// @Tags                   配置管理
+// @Accept                 json
+// @Produce                json
+// @Param                  body    body        appdto.UpdateSettingReq true    "配置信息"
+// @Success                200     {object}    appdto.EmptyResponse        "更新成功"
+// @Router                 /api/settings [put]
 func UpdateSettingAPI(c *gin.Context) {
 	var req appdto.UpdateSettingReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -36,6 +54,15 @@ func UpdateSettingAPI(c *gin.Context) {
 	gx.JSONSuccess(c, nil)
 }
 
+// DeleteSettingAPI       删除配置 godoc
+// @Summary               删除配置
+// @Description           删除指定配置项
+// @Tags                  配置管理
+// @Accept                json
+// @Produce               json
+// @Param                 body    body        appdto.DeleteSettingReq true    "配置信息"
+// @Success               200     {object}    appdto.EmptyResponse        "删除成功"
+// @Router                /api/settings [delete]
 func DeleteSettingAPI(c *gin.Context) {
 	var req appdto.DeleteSettingReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -50,6 +77,15 @@ func DeleteSettingAPI(c *gin.Context) {
 	gx.JSONSuccess(c, nil)
 }
 
+// GetSettingAPI          获取配置 godoc
+// @Summary               获取配置
+// @Description           获取指定配置项
+// @Tags                  配置管理
+// @Accept                json
+// @Produce               json
+// @Param                 body    body        appdto.GetSettingReq true    "配置查询信息"
+// @Success               200     {object}    appdto.SettingResponse  "获取成功"
+// @Router                /api/settings/get [post]
 func GetSettingAPI(c *gin.Context) {
 	var req appdto.GetSettingReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -64,6 +100,15 @@ func GetSettingAPI(c *gin.Context) {
 	gx.JSONSuccess(c, setting)
 }
 
+// GetSettingsAPI         获取配置列表 godoc
+// @Summary               获取配置列表
+// @Description           根据分组获取配置列表
+// @Tags                  配置管理
+// @Accept                json
+// @Produce               json
+// @Param                 group   query       string          false   "配置分组"
+// @Success               200     {object}    appdto.SettingListResponse  "获取成功"
+// @Router                /api/settings [get]
 func GetSettingsAPI(c *gin.Context) {
 	var req appdto.GetSettingsReq
 	if err := c.ShouldBindQuery(&req); err != nil {

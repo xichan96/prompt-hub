@@ -27,6 +27,7 @@ func NewApp(up persist.UserPersistIer) AppIer {
 
 func (a *app) CreateUser(ctx context.Context, req *appdto.CreateUserReq) (string, error) {
 	return a.up.Create(ctx, &model.User{
+		Username: req.Username,
 		Password: req.Password,
 		Role:     req.Role,
 	})

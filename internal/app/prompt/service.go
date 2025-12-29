@@ -17,7 +17,7 @@ type AppIer interface {
 	PublishPrompt(ctx context.Context, req *appdto.PublishPromptReq) error
 	DeletePrompt(ctx context.Context, req *appdto.DeletePromptReq) error
 	GetPrompt(ctx context.Context, req *appdto.GetPromptReq) (*appdto.Prompt, error)
-	GetPromptArchivedList(ctx context.Context, namespaceID, name string) ([]*appdto.Prompt, error)
+	GetPromptList(ctx context.Context, namespaceID, name, status string) ([]*appdto.Prompt, error)
 }
 
 type app struct {
@@ -114,33 +114,45 @@ func (a *app) PublishPrompt(ctx context.Context, req *appdto.PublishPromptReq) e
 
 func (a *app) DeletePrompt(ctx context.Context, req *appdto.DeletePromptReq) error {
 	options := make([]func(*gorm.DB) *gorm.DB, 0)
-	options = append(options, a.pp.Where(a.pp.F().NamespaceID.Eq(req.NamespaceID), a.pp.F().Name.Eq(req.Name)))
+	if req.ID != "" {
+		options = append(options, a.pp.Where(a.pp.F().ID.Eq(req.ID)))
+	} else {
+		options = append(options, a.pp.Where(a.pp.F().NamespaceID.Eq(req.NamespaceID), a.pp.F().Name.Eq(req.Name)))
+	}
 	return a.pp.DeleteBatch(ctx, options...)
 }
 
 func (a *app) GetPrompt(ctx context.Context, req *appdto.GetPromptReq) (*appdto.Prompt, error) {
-	options := make([]func(*gorm.DB) *gorm.DB, 0)
-	options = append(options, a.pp.Where(
-		a.pp.F().NamespaceID.Eq(req.NamespaceID),
-		a.pp.F().Name.Eq(req.Name),
-	))
-	if req.Status != "" {
-		options = append(options, a.pp.Where(a.pp.F().Status.Eq(req.Status)))
+	var prompt *model.Prompt
+	var err error
+	if req.ID != "" {
+		prompt, err = a.pp.GetByID(ctx, req.ID)
+	} else {
+		options := make([]func(*gorm.DB) *gorm.DB, 0)
+		options = append(options, a.pp.Where(
+			a.pp.F().NamespaceID.Eq(req.NamespaceID),
+			a.pp.F().Name.Eq(req.Name),
+		))
+		if req.Status != "" {
+			options = append(options, a.pp.Where(a.pp.F().Status.Eq(req.Status)))
+		}
+		prompt, err = a.pp.GetBy(ctx, options...)
 	}
-	prompt, err := a.pp.GetBy(ctx, options...)
 	if err != nil {
 		return nil, errors.New("prompt not found")
 	}
 	return toAppDTO(prompt), nil
 }
 
-func (a *app) GetPromptArchivedList(ctx context.Context, namespaceID, name string) ([]*appdto.Prompt, error) {
+func (a *app) GetPromptList(ctx context.Context, namespaceID, name, status string) ([]*appdto.Prompt, error) {
 	options := make([]func(*gorm.DB) *gorm.DB, 0)
-	options = append(options, a.pp.Where(
-		a.pp.F().NamespaceID.Eq(namespaceID),
-		a.pp.F().Name.Eq(name),
-		a.pp.F().Status.Eq(appdto.PromptStatusArchived),
-	))
+	options = append(options, a.pp.Where(a.pp.F().NamespaceID.Eq(namespaceID)))
+	if len(name) > 0 {
+		options = append(options, a.pp.Where(a.pp.F().Name.Like("%"+name+"%")))
+	}
+	if len(status) > 0 {
+		options = append(options, a.pp.Where(a.pp.F().Status.Eq(status)))
+	}
 	options = append(options, func(db *gorm.DB) *gorm.DB {
 		return db.Order("updated_at DESC")
 	})

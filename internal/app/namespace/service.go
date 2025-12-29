@@ -43,10 +43,26 @@ func (a *app) UpdateNamespace(ctx context.Context, req *appdto.UpdateNamespaceRe
 }
 
 func (a *app) DeleteNamespace(ctx context.Context, id string) error {
-
-	return nil
+	namespace := &model.Namespace{
+		ID: id,
+	}
+	return a.nps.Delete(ctx, namespace)
 }
 
 func (a *app) GetNamespaces(ctx context.Context) ([]*appdto.Namespace, error) {
-	return nil, nil
+	namespaces, err := a.nps.GetList(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*appdto.Namespace, 0, len(namespaces))
+	for _, n := range namespaces {
+		result = append(result, &appdto.Namespace{
+			ID:          n.ID,
+			Name:        n.Name,
+			Description: n.Description,
+			CreatedAt:   n.CreatedAt,
+			UpdatedAt:   n.UpdatedAt,
+		})
+	}
+	return result, nil
 }

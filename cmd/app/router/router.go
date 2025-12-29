@@ -13,27 +13,25 @@ func RegisterAPIRouter(r *gin.Engine) {
 		{
 			users.POST("", handler.CreateUserAPI)
 			users.GET("", handler.GetUsersAPI)
-			users.PUT("/:id", handler.UpdateUserAPI)
-			users.DELETE("/:id", handler.DeleteUserAPI)
+			users.PUT("/:user_id", handler.UpdateUserAPI)
+			users.DELETE("/:user_id", handler.DeleteUserAPI)
 		}
 
 		namespaces := api.Group("/namespaces")
 		{
 			namespaces.POST("", handler.CreateNamespaceAPI)
 			namespaces.GET("", handler.GetNamespacesAPI)
-			namespaces.PUT("/:id", handler.UpdateNamespaceAPI)
-			namespaces.DELETE("/:id", handler.DeleteNamespaceAPI)
-
-			namespaces.POST("/:namespace_id/prompts", handler.CreatePromptAPI)
-		}
-
-		prompts := api.Group("/prompts")
-		{
-			prompts.GET("", handler.GetPromptAPI)
-			prompts.PUT("/:id", handler.UpdatePromptAPI)
-			prompts.POST("/:id/publish", handler.PublishPromptAPI)
-			prompts.DELETE("", handler.DeletePromptAPI)
-			prompts.GET("/archived", handler.GetPromptArchivedListAPI)
+			namespaces.PUT("/:namespace_id", handler.UpdateNamespaceAPI)
+			namespaces.DELETE("/:namespace_id", handler.DeleteNamespaceAPI)
+			promptRouter := namespaces.Group("/:namespace_id/prompts")
+			{
+				promptRouter.POST("", handler.CreatePromptAPI)
+				promptRouter.GET("", handler.GetPromptListAPI)
+				promptRouter.PUT("/:prompt_id", handler.UpdatePromptAPI)
+				promptRouter.POST("/:prompt_id/publish", handler.PublishPromptAPI)
+				promptRouter.DELETE("/:prompt_id", handler.DeletePromptAPI)
+				promptRouter.GET("/:prompt_id", handler.GetPromptAPI)
+			}
 		}
 
 		settings := api.Group("/settings")
