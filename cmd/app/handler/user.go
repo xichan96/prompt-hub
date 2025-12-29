@@ -96,3 +96,26 @@ func GetUsersAPI(c *gin.Context) {
 	}
 	gx.JSONSuccess(c, users)
 }
+
+// LoginAPI    用户登录 godoc
+// @Summary         用户登录
+// @Description     用户账号密码登录
+// @Tags            用户管理
+// @Accept          json
+// @Produce         json
+// @Param           body    body        appdto.LoginRequest true    "登录信息"
+// @Success         200     {object}    appdto.LoginResponse  "登录成功"
+// @Router          /api/login [post]
+func LoginAPI(c *gin.Context) {
+	var req appdto.LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		gx.JSONErr(c, gx.BErr(err))
+		return
+	}
+	resp, err := di.UserApp.LoginWithPassword(c, &req)
+	if err != nil {
+		gx.JSONErr(c, err)
+		return
+	}
+	gx.JSONSuccess(c, resp)
+}

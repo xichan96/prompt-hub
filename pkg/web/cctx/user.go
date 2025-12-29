@@ -7,6 +7,7 @@ import (
 const (
 	userIDKey   = "__ctx.data.user_id"
 	usernameKey = "__ctx.data.username"
+	userRoleKey = "__ctx.data.user_role"
 )
 
 // GetUserID ...
@@ -27,4 +28,14 @@ func GetUsername(ctx context.Context) string {
 // SetUsername ...
 func SetUsername(ctx context.Context, username string) {
 	Set(ctx, usernameKey, username)
+}
+
+// GetUserRole ...
+func GetUserRole[T IntStr](ctx context.Context) T {
+	return Get[T](ctx, userRoleKey)
+}
+
+// SetUserRole ...
+func SetUserRole[T IntStr](ctx context.Context, role T) {
+	Set(ctx, userRoleKey, role)
 }

@@ -8,6 +8,10 @@ import (
 	"github.com/xichan96/prompt-hub/internal/appdto"
 	"github.com/xichan96/prompt-hub/internal/infra/model"
 	"github.com/xichan96/prompt-hub/internal/infra/persist"
+	"github.com/xichan96/prompt-hub/internal/pkg/errcode"
+	"github.com/xichan96/prompt-hub/pkg/ec"
+	"github.com/xichan96/prompt-hub/pkg/web/jwt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AppIer interface {
@@ -15,6 +19,7 @@ type AppIer interface {
 	UpdateUser(ctx context.Context, req *appdto.UpdateUserReq) error
 	DeleteUser(ctx context.Context, id string) error
 	GetUsers(ctx context.Context) ([]*appdto.User, error)
+	LoginWithPassword(ctx context.Context, req *appdto.LoginRequest) (*appdto.LoginResponse, error)
 }
 
 type app struct {
@@ -68,4 +73,35 @@ func (a *app) GetUsers(ctx context.Context) ([]*appdto.User, error) {
 		appUsers = append(appUsers, appUser)
 	}
 	return appUsers, nil
+}
+
+func (a *app) LoginWithPassword(ctx context.Context, req *appdto.LoginRequest) (*appdto.LoginResponse, error) {
+	user, err := a.up.GetBy(ctx, a.up.Where(
+		a.up.F().Username.Eq(req.Username),
+	))
+	if err != nil {
+		if ec.IsErrCode(err, ec.NoFound) {
+			return nil, errcode.UserPasswordError
+		}
+		return nil, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return nil, errcode.UserPasswordError
+	}
+
+	userData := map[string]interface{}{
+		"id":       user.ID,
+		"username": user.Username,
+		"role":     user.Role,
+	}
+
+	token, err := jwt.DefaultToken.Encode(userData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &appdto.LoginResponse{
+		Token: token,
+	}, nil
 }

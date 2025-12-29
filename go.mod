@@ -17,6 +17,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/swaggo/swag v1.16.6
+	golang.org/x/crypto v0.43.0
 	golang.org/x/exp v0.0.0-20251009144603-d2f985daa21b
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gen v0.3.27
@@ -62,7 +63,6 @@ require (
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	go.uber.org/mock v0.5.0 // indirect
 	golang.org/x/arch v0.20.0 // indirect
-	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect

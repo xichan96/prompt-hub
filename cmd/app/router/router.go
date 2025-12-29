@@ -9,6 +9,8 @@ import (
 func RegisterAPIRouter(r *gin.Engine) {
 	api := r.Group("/api")
 	{
+		api.POST("/login", handler.LoginAPI)
+
 		users := api.Group("/users")
 		{
 			users.POST("", handler.CreateUserAPI)

@@ -15,6 +15,15 @@ type UpdateUserReq struct {
 	Role     string `json:"role" validate:"omitempty,min=1,max=255"`
 }
 
+type LoginRequest struct {
+	Username string `json:"username" validate:"required,min=1,max=255"`
+	Password string `json:"password" validate:"required,min=1,max=255"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
+}
+
 type User struct {
 	ID        string    `json:"id"`
 	Username  string    `json:"username"`
