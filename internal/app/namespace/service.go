@@ -6,6 +6,7 @@ import (
 	"github.com/xichan96/prompt-hub/internal/appdto"
 	"github.com/xichan96/prompt-hub/internal/infra/model"
 	"github.com/xichan96/prompt-hub/internal/infra/persist"
+	"github.com/xichan96/prompt-hub/pkg/web/cctx"
 )
 
 type AppIer interface {
@@ -29,6 +30,7 @@ func (a *app) CreateNamespace(ctx context.Context, req *appdto.CreateNamespaceRe
 	namespace := &model.Namespace{
 		Name:        req.Name,
 		Description: req.Description,
+		CreatedBy:   cctx.GetUserID[string](ctx),
 	}
 	return a.nps.Create(ctx, namespace)
 }
@@ -39,7 +41,7 @@ func (a *app) UpdateNamespace(ctx context.Context, req *appdto.UpdateNamespaceRe
 		Name:        req.Name,
 		Description: req.Description,
 	}
-	return a.nps.Update(ctx, namespace)
+	return a.nps.Update(ctx, namespace, a.nps.Where(a.nps.F().ID.Eq(req.ID)))
 }
 
 func (a *app) DeleteNamespace(ctx context.Context, id string) error {

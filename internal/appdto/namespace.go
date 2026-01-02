@@ -8,7 +8,7 @@ type CreateNamespaceReq struct {
 }
 
 type UpdateNamespaceReq struct {
-	ID          string `json:"id" validate:"required,uuid"`
+	ID          string `json:"id" validate:"required"`
 	Name        string `json:"name" validate:"omitempty,min=1,max=255,regex=^[a-zA-Z][a-zA-Z0-9_]*$"`
 	Description string `json:"description" validate:"omitempty,min=1,max=255"`
 }

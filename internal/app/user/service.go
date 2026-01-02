@@ -31,9 +31,13 @@ func NewApp(up persist.UserPersistIer) AppIer {
 }
 
 func (a *app) CreateUser(ctx context.Context, req *appdto.CreateUserReq) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
 	return a.up.Create(ctx, &model.User{
 		Username: req.Username,
-		Password: req.Password,
+		Password: string(hashedPassword),
 		Role:     req.Role,
 	})
 }
@@ -43,10 +47,14 @@ func (a *app) UpdateUser(ctx context.Context, req *appdto.UpdateUserReq) error {
 	if err != nil {
 		return err
 	}
-	if user.Password != req.Password {
-		user.Password = req.Password
+	if len(req.Password) > 0 && user.Password != req.Password {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		user.Password = string(hashedPassword)
 	}
-	if user.Role != req.Role {
+	if len(req.Role) > 0 && user.Role != req.Role {
 		user.Role = req.Role
 	}
 	user.UpdatedAt = time.Now()

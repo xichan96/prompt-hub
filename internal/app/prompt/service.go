@@ -8,6 +8,7 @@ import (
 	"github.com/xichan96/prompt-hub/internal/appdto"
 	"github.com/xichan96/prompt-hub/internal/infra/model"
 	"github.com/xichan96/prompt-hub/internal/infra/persist"
+	"github.com/xichan96/prompt-hub/pkg/web/cctx"
 	"gorm.io/gorm"
 )
 
@@ -45,7 +46,7 @@ func (a *app) CreatePrompt(ctx context.Context, req *appdto.CreatePromptDraftReq
 		Description: req.Description,
 		Content:     req.Content,
 		Status:      appdto.PromptStatusDraft,
-		CreatedBy:   "", // TODO: get user id from context
+		CreatedBy:   cctx.GetUserID[string](ctx),
 		CreatedAt:   nowTime,
 		UpdatedAt:   nowTime,
 	}

@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/xichan96/prompt-hub/cmd/app/handler"
+	"github.com/xichan96/prompt-hub/cmd/app/middleware"
 )
 
 func RegisterAPIRouter(r *gin.Engine) {
@@ -11,21 +12,21 @@ func RegisterAPIRouter(r *gin.Engine) {
 	{
 		api.POST("/login", handler.LoginAPI)
 
-		users := api.Group("/users")
+		users := api.Group("/users", middleware.Auth())
 		{
-			users.POST("", handler.CreateUserAPI)
-			users.GET("", handler.GetUsersAPI)
+			users.POST("", middleware.AdminRoleMiddleware(), handler.CreateUserAPI)
+			users.GET("", middleware.AdminRoleMiddleware(), handler.GetUsersAPI)
 			users.PUT("/:user_id", handler.UpdateUserAPI)
-			users.DELETE("/:user_id", handler.DeleteUserAPI)
+			users.DELETE("/:user_id", middleware.AdminRoleMiddleware(), handler.DeleteUserAPI)
 		}
 
-		namespaces := api.Group("/namespaces")
+		namespaces := api.Group("/namespaces", middleware.Auth())
 		{
 			namespaces.POST("", handler.CreateNamespaceAPI)
 			namespaces.GET("", handler.GetNamespacesAPI)
 			namespaces.PUT("/:namespace_id", handler.UpdateNamespaceAPI)
 			namespaces.DELETE("/:namespace_id", handler.DeleteNamespaceAPI)
-			promptRouter := namespaces.Group("/:namespace_id/prompts")
+			promptRouter := namespaces.Group("/:namespace_id/prompts", middleware.NamespaceAccessMiddleware())
 			{
 				promptRouter.POST("", handler.CreatePromptAPI)
 				promptRouter.GET("", handler.GetPromptListAPI)
@@ -36,7 +37,7 @@ func RegisterAPIRouter(r *gin.Engine) {
 			}
 		}
 
-		settings := api.Group("/settings")
+		settings := api.Group("/settings", middleware.Auth(), middleware.AdminRoleMiddleware())
 		{
 			settings.POST("", handler.CreateSettingAPI)
 			settings.GET("", handler.GetSettingsAPI)
