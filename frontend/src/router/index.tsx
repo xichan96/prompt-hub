@@ -9,6 +9,7 @@ import AppLayout from '@/layout/AppLayout';
 
 const Namespaces = lazy(() => import('@/pages/Namespaces'));
 const NamespaceDetail = lazy(() => import('@/pages/NamespaceDetail'));
+const PromptEditor = lazy(() => import('@/pages/PromptEditor'));
 const Users = lazy(() => import('@/pages/Users'));
 const Settings = lazy(() => import('@/pages/Settings'));
 
@@ -47,6 +48,16 @@ export const router = createBrowserRouter([
             ),
           },
         ],
+      },
+      {
+        path: 'namespaces/:namespaceId/prompts/:promptId/edit',
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoading />}>
+              <PromptEditor />
+            </Suspense>
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'users',

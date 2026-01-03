@@ -1,7 +1,7 @@
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { useAuthStore } from '@/store';
 import { Button, Dropdown } from 'antd';
-import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, FolderOutlined, SettingOutlined } from '@ant-design/icons';
 import styles from './index.module.scss';
 
 export interface HeaderProps {
@@ -20,6 +20,7 @@ export default function Header(props: HeaderProps) {
   } = props;
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
@@ -27,14 +28,51 @@ export default function Header(props: HeaderProps) {
     navigate('/login');
   };
 
+  const isActivePath = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const handleNavigate = (path: string) => {
+    if (!isActivePath(path)) {
+      navigate(path);
+    }
+  };
+
   const userMenuItems = [
     {
-      key: 'logout',
-      label: '退出登录',
-      icon: <LogoutOutlined />,
-      onClick: handleLogout,
+      key: 'namespaces',
+      label: '命名空间',
+      icon: <FolderOutlined />,
+      onClick: () => handleNavigate('/namespaces'),
+      disabled: isActivePath('/namespaces'),
     },
   ];
+
+  if (user?.role === 'admin') {
+    userMenuItems.push(
+      {
+        key: 'users',
+        label: '用户管理',
+        icon: <UserOutlined />,
+        onClick: () => handleNavigate('/users'),
+        disabled: isActivePath('/users'),
+      },
+      {
+        key: 'settings',
+        label: '系统设置',
+        icon: <SettingOutlined />,
+        onClick: () => handleNavigate('/settings'),
+        disabled: isActivePath('/settings'),
+      }
+    );
+  }
+
+  userMenuItems.push({
+    key: 'logout',
+    label: '退出登陆',
+    icon: <LogoutOutlined />,
+    onClick: handleLogout,
+  });
 
   return (
     <header className={styles.wrap} style={style}>

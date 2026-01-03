@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Card, Table, Button, Space, message, Flex, Popconfirm, Form, Input, Modal, TableColumnsType, Tag, Select } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Space, message, Flex, Popconfirm, Form, Input, Modal, TableColumnsType, Tabs } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router';
-import { createPrompt, deletePrompt, getPromptList, updatePrompt, publishPrompt, Prompt, CreatePromptRequest, UpdatePromptRequest } from '@/apis/prompt';
+import { createPrompt, deletePrompt, getPromptList, updatePrompt, Prompt, CreatePromptRequest, UpdatePromptRequest } from '@/apis/prompt';
 import { getNamespaces, Namespace } from '@/apis/namespace';
 import Page from '@/components/Page';
 import dayjs from 'dayjs';
@@ -12,18 +12,19 @@ export default function NamespaceDetail() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [namespaces, setNamespaces] = useState<Namespace[]>([]);
   const [namespace, setNamespace] = useState<Namespace | null>(null);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [filterName, setFilterName] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
 
   const getNamespaceInfo = async () => {
     if (!namespaceId) return;
     try {
-      const namespaces = await getNamespaces();
-      const ns = namespaces.find(n => n.id === namespaceId);
+      const nsList = await getNamespaces();
+      setNamespaces(nsList);
+      const ns = nsList.find(n => n.id === namespaceId);
       setNamespace(ns || null);
     } catch (error) {
       console.error(error);
@@ -34,9 +35,8 @@ export default function NamespaceDetail() {
     if (!namespaceId) return;
     try {
       setLoading(true);
-      const params: { name?: string; status?: string } = {};
+      const params: { name?: string; status?: string } = { status: 'draft' };
       if (filterName) params.name = filterName;
-      if (filterStatus) params.status = filterStatus;
       const res = await getPromptList(namespaceId, params);
       setPrompts(res);
     } catch (error) {
@@ -48,16 +48,23 @@ export default function NamespaceDetail() {
 
   useEffect(() => {
     getNamespaceInfo();
-  }, [namespaceId]);
+  }, []);
+
+  useEffect(() => {
+    if (namespaceId) {
+      const ns = namespaces.find(n => n.id === namespaceId);
+      setNamespace(ns || null);
+    }
+  }, [namespaceId, namespaces]);
 
   useEffect(() => {
     getList();
-  }, [namespaceId, filterName, filterStatus]);
+  }, [namespaceId, filterName]);
 
   const handleEdit = (record: Prompt) => {
-    setEditingPrompt(record);
-    form.setFieldsValue({ ...record });
-    setModalVisible(true);
+    if (namespaceId) {
+      navigate(`/namespaces/${namespaceId}/prompts/${record.id}/edit`);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -68,17 +75,6 @@ export default function NamespaceDetail() {
       getList();
     } catch (error) {
       message.error('删除失败');
-    }
-  };
-
-  const handlePublish = async (id: string) => {
-    if (!namespaceId) return;
-    try {
-      await publishPrompt(namespaceId, id);
-      message.success('发布成功');
-      getList();
-    } catch (error) {
-      message.error('发布失败');
     }
   };
 
@@ -116,20 +112,6 @@ export default function NamespaceDetail() {
       ellipsis: true,
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      align: 'center',
-      render: (status: string) => {
-        const colorMap: Record<string, string> = {
-          draft: 'default',
-          published: 'success',
-          archived: 'warning',
-        };
-        return <Tag color={colorMap[status] || 'default'}>{status}</Tag>;
-      },
-    },
-    {
       title: '创建时间',
       dataIndex: 'created_at',
       key: 'created_at',
@@ -146,19 +128,10 @@ export default function NamespaceDetail() {
     {
       title: '操作',
       key: 'action',
-      width: 250,
+      width: 150,
       align: 'center',
       render: (_, record) => (
         <Space size="middle">
-          {record.status === 'draft' && (
-            <Button
-              type="link"
-              icon={<CheckCircleOutlined />}
-              onClick={() => handlePublish(record.id)}
-            >
-              发布
-            </Button>
-          )}
           <Button
             type="link"
             icon={<EditOutlined />}
@@ -181,16 +154,21 @@ export default function NamespaceDetail() {
     },
   ];
 
+  const handleTabChange = (key: string) => {
+    navigate(`/namespaces/${key}`);
+  };
+
   return (
-    <Page 
-      title={namespace?.name || '命名空间详情'} 
-      description={namespace?.description || ''}
-      extra={
-        <Button onClick={() => navigate('/namespaces')}>
-          返回列表
-        </Button>
-      }
-    >
+    <Page title="提示词管理">
+      <Tabs
+        activeKey={namespaceId}
+        onChange={handleTabChange}
+        items={namespaces.map(ns => ({
+          key: ns.id,
+          label: ns.name,
+        }))}
+        style={{ marginBottom: 24 }}
+      />
       <Card className="content-card">
         <Flex
           align="center"
@@ -206,20 +184,9 @@ export default function NamespaceDetail() {
               style={{ width: 200 }}
               allowClear
             />
-            <Select
-              placeholder="筛选状态"
-              value={filterStatus}
-              onChange={setFilterStatus}
-              style={{ width: 150 }}
-              allowClear
-            >
-              <Select.Option value="draft">草稿</Select.Option>
-              <Select.Option value="published">已发布</Select.Option>
-              <Select.Option value="archived">已归档</Select.Option>
-            </Select>
           </Space>
           <Space>
-            <div>共 {prompts.length} 个提示词</div>
+            <div>共{prompts.length}个提示词</div>
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -285,6 +252,7 @@ export default function NamespaceDetail() {
           </Form.Item>
         </Form>
       </Modal>
+
     </Page>
   );
 }

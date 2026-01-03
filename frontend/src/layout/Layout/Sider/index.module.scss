@@ -3,11 +3,12 @@
   flex: 0 0 188px;
   min-width: 188px;
   max-width: 188px;
-  background-color: #fff;
+  background-color: #1f1f1f;
   display: flex;
   flex-direction: column;
   z-index: 999;
-  box-shadow: 2px 0 6px #2922220f;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.3);
+  border-right: 1px solid #434343;
 
   .header {
     height: 48px;
@@ -16,7 +17,7 @@
     font-weight: bold;
     text-align: center;
     margin: 4px 10px;
-    border-bottom: 1px solid #E8E9EB;
+    border-bottom: 1px solid #434343;
   }
 
   .menu {

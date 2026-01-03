@@ -10,7 +10,8 @@ body {
     'Segoe UI Emoji', 'Segoe UI Symbol';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
+  background-color: #141414;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 #root {
@@ -23,17 +24,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #1f1f1f;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #434343;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: #595959;
 }
 
 .fade-in {
@@ -72,30 +73,29 @@ body {
 }
 
 .page-header {
-  background: #fff;
-  padding: 16px 24px;
+  background: transparent;
+  padding: 0;
   margin-bottom: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .page-title {
   font-size: 20px;
   font-weight: 600;
-  color: #262626;
-  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 16px 0;
 }
 
 .page-description {
-  color: #8c8c8c;
+  color: rgba(255, 255, 255, 0.45);
   margin-top: 4px;
 }
 
 .content-card {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 12px 16px;
+  background: #1f1f1f;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 24px;
   margin-bottom: 24px;
+  border: 1px solid #434343;
 }
 
