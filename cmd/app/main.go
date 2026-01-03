@@ -47,16 +47,16 @@ func initAdminUser() {
 	ctx := context.Background()
 	up := persist.NewUserPersist()
 
-	_, err := up.GetBy(ctx, up.Where(
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("adminadmin"), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	user, err := up.GetBy(ctx, up.Where(
 		up.F().Username.Eq("admin"),
-		up.F().Role.Eq("admin"),
 	))
 
 	if err != nil && ec.IsErrCode(err, ec.NoFound) {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
-		if err != nil {
-			log.Fatal(err)
-		}
 		_, err = up.Create(ctx, &model.User{
 			Username: "admin",
 			Password: string(hashedPassword),
@@ -68,5 +68,12 @@ func initAdminUser() {
 		log.Info("Admin user initialized")
 	} else if err != nil {
 		log.Fatal(err)
+	} else {
+		user.Password = string(hashedPassword)
+		user.Role = "admin"
+		if err := up.Update(ctx, user); err != nil {
+			log.Fatal(err)
+		}
+		log.Info("Admin user password updated")
 	}
 }

@@ -31,14 +31,28 @@ func NewApp(up persist.UserPersistIer) AppIer {
 }
 
 func (a *app) CreateUser(ctx context.Context, req *appdto.CreateUserReq) (string, error) {
+	existingUser, err := a.up.GetBy(ctx, a.up.Where(
+		a.up.F().Username.Eq(req.Username),
+	))
+	if err != nil && !ec.IsErrCode(err, ec.NoFound) {
+		return "", err
+	}
+	if existingUser != nil {
+		return "", errcode.UsernameExisted
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}
+	role := req.Role
+	if len(role) == 0 {
+		role = "user"
+	}
 	return a.up.Create(ctx, &model.User{
 		Username: req.Username,
 		Password: string(hashedPassword),
-		Role:     req.Role,
+		Role:     role,
 	})
 }
 
@@ -75,10 +89,10 @@ func (a *app) GetUsers(ctx context.Context) ([]*appdto.User, error) {
 		return nil, err
 	}
 	appUsers := make([]*appdto.User, len(users))
-	for _, user := range users {
+	for i, user := range users {
 		appUser := &appdto.User{}
 		copier.Copy(appUser, user)
-		appUsers = append(appUsers, appUser)
+		appUsers[i] = appUser
 	}
 	return appUsers, nil
 }

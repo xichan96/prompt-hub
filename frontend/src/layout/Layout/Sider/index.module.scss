@@ -1,0 +1,29 @@
+.sider {
+  height: 100%;
+  flex: 0 0 188px;
+  min-width: 188px;
+  max-width: 188px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  z-index: 999;
+  box-shadow: 2px 0 6px #2922220f;
+
+  .header {
+    height: 48px;
+    line-height: 48px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    margin: 4px 10px;
+    border-bottom: 1px solid #E8E9EB;
+  }
+
+  .menu {
+    margin-top: 4px;
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+  }
+}
+

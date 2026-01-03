@@ -5,7 +5,7 @@ import "time"
 type CreateUserReq struct {
 	Username string `json:"username" validate:"required,min=1,max=255"`
 	Password string `json:"password" validate:"required,min=1,max=255"`
-	Role     string `json:"role" validate:"required,min=1,max=255"`
+	Role     string `json:"role" validate:"omitempty,min=1,max=255"`
 }
 
 type UpdateUserReq struct {

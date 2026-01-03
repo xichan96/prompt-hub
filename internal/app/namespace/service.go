@@ -6,6 +6,8 @@ import (
 	"github.com/xichan96/prompt-hub/internal/appdto"
 	"github.com/xichan96/prompt-hub/internal/infra/model"
 	"github.com/xichan96/prompt-hub/internal/infra/persist"
+	"github.com/xichan96/prompt-hub/internal/pkg/errcode"
+	"github.com/xichan96/prompt-hub/pkg/ec"
 	"github.com/xichan96/prompt-hub/pkg/web/cctx"
 )
 
@@ -27,6 +29,16 @@ func NewApp(nps persist.NamespacePersistIer) AppIer {
 }
 
 func (a *app) CreateNamespace(ctx context.Context, req *appdto.CreateNamespaceReq) (string, error) {
+	existingNamespace, err := a.nps.GetBy(ctx, a.nps.Where(
+		a.nps.F().Name.Eq(req.Name),
+	))
+	if err != nil && !ec.IsErrCode(err, ec.NoFound) {
+		return "", err
+	}
+	if existingNamespace != nil {
+		return "", errcode.NamespaceNameExisted
+	}
+
 	namespace := &model.Namespace{
 		Name:        req.Name,
 		Description: req.Description,
@@ -36,6 +48,19 @@ func (a *app) CreateNamespace(ctx context.Context, req *appdto.CreateNamespaceRe
 }
 
 func (a *app) UpdateNamespace(ctx context.Context, req *appdto.UpdateNamespaceReq) error {
+	if len(req.Name) > 0 {
+		existingNamespace, err := a.nps.GetBy(ctx, a.nps.Where(
+			a.nps.F().Name.Eq(req.Name),
+			a.nps.F().ID.Neq(req.ID),
+		))
+		if err != nil && !ec.IsErrCode(err, ec.NoFound) {
+			return err
+		}
+		if existingNamespace != nil {
+			return errcode.NamespaceNameExisted
+		}
+	}
+
 	namespace := &model.Namespace{
 		ID:          req.ID,
 		Name:        req.Name,
