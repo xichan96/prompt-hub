@@ -36,3 +36,37 @@ type Setting struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type LLMConfig struct {
+	Provider string         `yaml:"provider" json:"provider"`
+	OpenAI   OpenAIConfig   `yaml:"openai" json:"openai"`
+	DeepSeek DeepSeekConfig `yaml:"deepseek" json:"deepseek"`
+	Volce    VolceConfig    `yaml:"volce" json:"volce"`
+}
+
+type OpenAIConfig struct {
+	APIKey  string `yaml:"api_key" json:"api_key"`
+	BaseURL string `yaml:"base_url" json:"base_url"`
+	Model   string `yaml:"model" json:"model"`
+	OrgID   string `yaml:"org_id" json:"org_id"`
+	APIType string `yaml:"api_type" json:"api_type"`
+}
+
+type DeepSeekConfig struct {
+	APIKey  string `yaml:"api_key" json:"api_key"`
+	BaseURL string `yaml:"base_url" json:"base_url"`
+	Model   string `yaml:"model" json:"model"`
+}
+
+type VolceConfig struct {
+	APIKey  string `yaml:"api_key" json:"api_key"`
+	BaseURL string `yaml:"base_url" json:"base_url"`
+	Model   string `yaml:"model" json:"model"`
+}
+
+type LLMSetting struct {
+	*LLMConfig
+}
+
+type UpdateLLMSettingReq struct {
+	*LLMConfig
+}

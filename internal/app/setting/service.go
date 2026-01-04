@@ -2,11 +2,14 @@ package setting
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 
 	"github.com/jinzhu/copier"
 	"github.com/xichan96/prompt-hub/internal/appdto"
 	"github.com/xichan96/prompt-hub/internal/infra/model"
 	"github.com/xichan96/prompt-hub/internal/infra/persist"
+	"github.com/xichan96/prompt-hub/pkg/ec"
 	"gorm.io/gorm"
 )
 
@@ -16,6 +19,9 @@ type AppIer interface {
 	DeleteSetting(ctx context.Context, req *appdto.DeleteSettingReq) error
 	GetSetting(ctx context.Context, req *appdto.GetSettingReq) (*appdto.Setting, error)
 	GetSettings(ctx context.Context, req *appdto.GetSettingsReq) ([]*appdto.Setting, error)
+	// llm 设置，如果不存在要插入到 setting 表中
+	GetLLMSetting(ctx context.Context) (*appdto.LLMSetting, error)
+	UpdateLLMSetting(ctx context.Context, req *appdto.UpdateLLMSettingReq) error
 }
 
 type app struct {
@@ -81,4 +87,46 @@ func (a *app) GetSettings(ctx context.Context, req *appdto.GetSettingsReq) ([]*a
 		result = append(result, setting)
 	}
 	return result, nil
+}
+
+func (a *app) GetLLMSetting(ctx context.Context) (*appdto.LLMSetting, error) {
+	options := make([]func(*gorm.DB) *gorm.DB, 0)
+	options = append(options, a.sp.Where(a.sp.F().Group.Eq("llm"), a.sp.F().Key.Eq("config")))
+	setting, err := a.sp.GetBy(ctx, options...)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || ec.IsErrCode(err, ec.NoFound) {
+			llmConfig := &appdto.LLMConfig{}
+			return &appdto.LLMSetting{LLMConfig: llmConfig}, nil
+		}
+		return nil, err
+	}
+	llmConfig := &appdto.LLMConfig{}
+	if err := json.Unmarshal([]byte(setting.Value), llmConfig); err != nil {
+		return nil, err
+	}
+	return &appdto.LLMSetting{LLMConfig: llmConfig}, nil
+}
+
+func (a *app) UpdateLLMSetting(ctx context.Context, req *appdto.UpdateLLMSettingReq) error {
+	valueBytes, err := json.Marshal(req.LLMConfig)
+	if err != nil {
+		return err
+	}
+	options := make([]func(*gorm.DB) *gorm.DB, 0)
+	options = append(options, a.sp.Where(a.sp.F().Group.Eq("llm"), a.sp.F().Key.Eq("config")))
+	setting, err := a.sp.GetBy(ctx, options...)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || ec.IsErrCode(err, ec.NoFound) {
+			setting = &model.Setting{
+				Group: "llm",
+				Key:   "config",
+				Value: string(valueBytes),
+			}
+			_, err = a.sp.Create(ctx, setting)
+			return err
+		}
+		return err
+	}
+	setting.Value = string(valueBytes)
+	return a.sp.Update(ctx, setting, options...)
 }

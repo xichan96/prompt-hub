@@ -20,7 +20,9 @@ import (
 	"context"
 
 	"github.com/xichan96/prompt-hub/cmd/app/router"
+	"github.com/xichan96/prompt-hub/internal/appdto"
 	"github.com/xichan96/prompt-hub/internal/config"
+	"github.com/xichan96/prompt-hub/internal/di"
 	"github.com/xichan96/prompt-hub/internal/infra/migrate"
 	"github.com/xichan96/prompt-hub/internal/infra/model"
 	"github.com/xichan96/prompt-hub/internal/infra/persist"
@@ -38,6 +40,7 @@ func main() {
 	config.InitVariable()
 	migrate.MigrateTable()
 	initAdminUser()
+	initLLMSetting()
 	s := gx.NewServer()
 	router.RegisterAPIRouter(s.Engine)
 	s.Run()
@@ -75,5 +78,45 @@ func initAdminUser() {
 			log.Fatal(err)
 		}
 		log.Info("Admin user password updated")
+	}
+}
+
+func initLLMSetting() {
+	ctx := context.Background()
+	settingApp := di.SettingApp
+
+	llmSetting, err := settingApp.GetLLMSetting(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if llmSetting == nil || llmSetting.LLMConfig == nil || llmSetting.LLMConfig.Provider == "" {
+		defaultConfig := &appdto.UpdateLLMSettingReq{
+			LLMConfig: &appdto.LLMConfig{
+				Provider: "openai",
+				OpenAI: appdto.OpenAIConfig{
+					APIKey:  "",
+					BaseURL: "https://api.openai.com/v1",
+					Model:   "gpt-3.5-turbo",
+					OrgID:   "",
+					APIType: "open_ai",
+				},
+				DeepSeek: appdto.DeepSeekConfig{
+					APIKey:  "",
+					BaseURL: "https://api.deepseek.com",
+					Model:   "deepseek-chat",
+				},
+				Volce: appdto.VolceConfig{
+					APIKey:  "",
+					BaseURL: "",
+					Model:   "",
+				},
+			},
+		}
+		err = settingApp.UpdateLLMSetting(ctx, defaultConfig)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Info("LLM setting initialized")
 	}
 }
