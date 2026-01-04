@@ -44,6 +44,8 @@ func RegisterAPIRouter(r *gin.Engine) {
 			settings.POST("/get", handler.GetSettingAPI)
 			settings.PUT("", handler.UpdateSettingAPI)
 			settings.DELETE("", handler.DeleteSettingAPI)
+			settings.GET("/llm", handler.GetLLMSettingAPI)
+			settings.PUT("/llm", handler.UpdateLLMSettingAPI)
 		}
 	}
 }

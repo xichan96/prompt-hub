@@ -11,6 +11,18 @@ export default defineConfig({
     },
   },
 
+  css: {
+    preprocessorOptions: {
+      scss: {
+        silenceDeprecations: ['legacy-js-api'],
+      },
+    },
+  },
+
+  optimizeDeps: {
+    force: true,
+  },
+
   server: {
     port: 3000,
     open: true,

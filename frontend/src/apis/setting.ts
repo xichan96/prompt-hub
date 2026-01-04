@@ -40,3 +40,70 @@ export const getSetting = (data: GetSettingRequest) => request.post<Setting>('/s
 
 export const getSettings = (params?: { group?: string }) => request.get<Setting[]>('/settings', { params });
 
+export interface LLMConfig {
+  provider: string;
+  openai: {
+    api_key: string;
+    base_url: string;
+    model: string;
+    org_id: string;
+    api_type: string;
+  };
+  deepseek: {
+    api_key: string;
+    base_url: string;
+    model: string;
+  };
+  volce: {
+    api_key: string;
+    base_url: string;
+    model: string;
+  };
+}
+
+export interface LLMSetting {
+  provider: string;
+  openai: {
+    api_key: string;
+    base_url: string;
+    model: string;
+    org_id: string;
+    api_type: string;
+  };
+  deepseek: {
+    api_key: string;
+    base_url: string;
+    model: string;
+  };
+  volce: {
+    api_key: string;
+    base_url: string;
+    model: string;
+  };
+}
+
+export interface UpdateLLMSettingRequest {
+  provider: string;
+  openai: {
+    api_key: string;
+    base_url: string;
+    model: string;
+    org_id: string;
+    api_type: string;
+  };
+  deepseek: {
+    api_key: string;
+    base_url: string;
+    model: string;
+  };
+  volce: {
+    api_key: string;
+    base_url: string;
+    model: string;
+  };
+}
+
+export const getLLMSetting = () => request.get<LLMSetting>('/settings/llm');
+
+export const updateLLMSetting = (data: UpdateLLMSettingRequest) => request.put('/settings/llm', data);
+

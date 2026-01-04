@@ -122,3 +122,43 @@ func GetSettingsAPI(c *gin.Context) {
 	}
 	gx.JSONSuccess(c, settings)
 }
+
+// GetLLMSettingAPI       获取LLM配置 godoc
+// @Summary               获取LLM配置
+// @Description           获取LLM配置信息
+// @Tags                  配置管理
+// @Accept                json
+// @Produce               json
+// @Success               200     {object}    appdto.LLMSetting  "获取成功"
+// @Router                /api/settings/llm [get]
+func GetLLMSettingAPI(c *gin.Context) {
+	setting, err := di.SettingApp.GetLLMSetting(c)
+	if err != nil {
+		gx.JSONErr(c, err)
+		return
+	}
+	gx.JSONSuccess(c, setting)
+}
+
+// UpdateLLMSettingAPI    更新LLM配置 godoc
+// @Summary               更新LLM配置
+// @Description           更新LLM配置信息
+// @Tags                  配置管理
+// @Accept                json
+// @Produce               json
+// @Param                 body    body        appdto.UpdateLLMSettingReq true    "LLM配置信息"
+// @Success               200     {object}    appdto.EmptyResponse        "更新成功"
+// @Router                /api/settings/llm [put]
+func UpdateLLMSettingAPI(c *gin.Context) {
+	var req appdto.UpdateLLMSettingReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		gx.JSONErr(c, gx.BErr(err))
+		return
+	}
+	err := di.SettingApp.UpdateLLMSetting(c, &req)
+	if err != nil {
+		gx.JSONErr(c, err)
+		return
+	}
+	gx.JSONSuccess(c, nil)
+}
