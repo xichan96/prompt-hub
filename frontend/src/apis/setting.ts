@@ -129,3 +129,49 @@ export const getAgentSetting = () => request.get<AgentSetting>('/settings/agent'
 
 export const updateAgentSetting = (data: UpdateAgentSettingRequest) => request.put('/settings/agent', data);
 
+export interface SimpleMemoryConfig {
+  max_history_messages: number;
+}
+
+export interface MongoDBMemoryConfig {
+  uri: string;
+  database: string;
+  collection: string;
+  max_history_messages: number;
+}
+
+export interface RedisMemoryConfig {
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  db: number;
+  key_prefix: string;
+  max_history_messages: number;
+}
+
+export interface MemoryConfig {
+  provider: string; // simple, mongodb, redis
+  simple: SimpleMemoryConfig;
+  mongodb: MongoDBMemoryConfig;
+  redis: RedisMemoryConfig;
+}
+
+export interface MemorySetting {
+  provider: string;
+  simple: SimpleMemoryConfig;
+  mongodb: MongoDBMemoryConfig;
+  redis: RedisMemoryConfig;
+}
+
+export interface UpdateMemorySettingRequest {
+  provider: string;
+  simple: SimpleMemoryConfig;
+  mongodb: MongoDBMemoryConfig;
+  redis: RedisMemoryConfig;
+}
+
+export const getMemorySetting = () => request.get<MemorySetting>('/settings/memory');
+
+export const updateMemorySetting = (data: UpdateMemorySettingRequest) => request.put('/settings/memory', data);
+

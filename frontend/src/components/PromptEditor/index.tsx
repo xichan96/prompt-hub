@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Modal, Input } from 'antd';
 import { Prompt } from '@/apis/prompt';
 import styles from './index.module.scss';
 import EditorHeader from './EditorHeader';
 import VersionList from './VersionList';
-import EditorArea, { ActionButton } from './EditorArea';
-import AgentChat from './AgentChat';
+import EditorArea, { ActionButton, EditorAreaRef } from './EditorArea';
+import AgentChat, { AgentChatRef } from './AgentChat';
 import { VersionType } from './types';
 import { usePromptOperations, usePromptVersions, usePromptContent } from '@/hooks';
 
@@ -25,6 +25,8 @@ export default function PromptEditor({ prompt, content, onContentChange, onPubli
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [publishModalVisible, setPublishModalVisible] = useState(false);
   const [publishDescription, setPublishDescription] = useState('');
+  const editorAreaRef = useRef<EditorAreaRef>(null);
+  const agentChatRef = useRef<AgentChatRef>(null);
 
   const { publishing, saving, handleSave, handlePublish } = usePromptOperations(namespaceId, promptId);
   const { publishedContent, hasPublished, loadPublishedContent } = usePromptVersions(namespaceId, prompt?.name);
@@ -107,6 +109,10 @@ export default function PromptEditor({ prompt, content, onContentChange, onPubli
     return content;
   }, [selectedVersion, historyContent, currentVersionContent, content]);
 
+  const handleAddToChat = useCallback((chatContent: string | any) => {
+    agentChatRef.current?.setInputMessage(chatContent);
+  }, []);
+
   return (
     <div className={styles.container}>
       <EditorHeader 
@@ -142,6 +148,7 @@ export default function PromptEditor({ prompt, content, onContentChange, onPubli
           />
         )}
         <EditorArea
+          ref={editorAreaRef}
           content={displayContent}
           onContentChange={onContentChange}
           actions={editorActions}
@@ -149,8 +156,13 @@ export default function PromptEditor({ prompt, content, onContentChange, onPubli
           originalContent={publishedContent}
           modifiedContent={content}
           hasPublished={hasPublished}
+          onAddToChat={handleAddToChat}
+          fileName={prompt?.name || 'prompt.md'}
         />
-        <AgentChat />
+        <AgentChat 
+          ref={agentChatRef}
+          editorAreaRef={editorAreaRef}
+        />
       </div>
       <Modal
         title="发布提示词"

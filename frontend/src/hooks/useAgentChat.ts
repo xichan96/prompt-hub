@@ -7,6 +7,7 @@ export interface Message {
   role: 'user' | 'agent';
   content: string;
   streaming?: boolean;
+  userMessage?: string;
 }
 
 interface ChatCache {
@@ -15,8 +16,14 @@ interface ChatCache {
 }
 
 const STORAGE_KEY = 'agent_chat_cache';
+const AUTO_APPLY_KEY = 'agent_auto_apply';
 
-export function useAgentChat() {
+export interface UseAgentChatOptions {
+  onAgentMessageComplete?: (content: string, userMessage: string) => void;
+}
+
+export function useAgentChat(options?: UseAgentChatOptions) {
+  const { onAgentMessageComplete } = options || {};
   const [agentMessage, setAgentMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [sending, setSending] = useState(false);
@@ -93,16 +100,15 @@ export function useAgentChat() {
     clearCache();
   }, [clearCache]);
 
-  const handleSendMessage = useCallback(async () => {
-    if (!agentMessage.trim() || sending) return;
+  const sendMessageInternal = useCallback(async (messageContent: string) => {
+    if (!messageContent.trim() || sending) return;
     
     const userMessage: Message = {
       id: `user-${Date.now()}-${Math.random()}`,
       role: 'user',
-      content: agentMessage,
+      content: messageContent,
+      userMessage: messageContent,
     };
-    const currentMessage = agentMessage;
-    setAgentMessage('');
     setSending(true);
 
     if (abortControllerRef.current) {
@@ -114,7 +120,7 @@ export function useAgentChat() {
     setMessages(prev => [
       ...prev,
       userMessage,
-      { id: agentMessageId, role: 'agent', content: '', streaming: true },
+      { id: agentMessageId, role: 'agent', content: '', streaming: true, userMessage: messageContent },
     ]);
 
     try {
@@ -129,7 +135,7 @@ export function useAgentChat() {
       }
 
       const requestData: AgentChatRequest = {
-        message: currentMessage,
+        message: messageContent,
         session_id: currentSessionId,
       };
 
@@ -168,13 +174,20 @@ export function useAgentChat() {
             if (line.startsWith('data: ')) {
               const data = line.slice(6).trim();
               if (data === '[DONE]') {
-                setMessages(prev =>
-                  prev.map(msg =>
+                setMessages(prev => {
+                  const updated = prev.map(msg =>
                     msg.id === agentMessageId
                       ? { ...msg, streaming: false }
                       : msg
-                  )
-                );
+                  );
+                  const completedMessage = updated.find(msg => msg.id === agentMessageId);
+                  if (completedMessage && onAgentMessageComplete && completedMessage.content) {
+                    setTimeout(() => {
+                      onAgentMessageComplete(completedMessage.content, completedMessage.userMessage || '');
+                    }, 100);
+                  }
+                  return updated;
+                });
                 continue;
               }
 
@@ -218,11 +231,18 @@ export function useAgentChat() {
           }
         }
 
-        setMessages(prev =>
-          prev.map(msg =>
+        setMessages(prev => {
+          const updated = prev.map(msg =>
             msg.id === agentMessageId ? { ...msg, streaming: false } : msg
-          )
-        );
+          );
+          const completedMessage = updated.find(msg => msg.id === agentMessageId);
+          if (completedMessage && onAgentMessageComplete && completedMessage.content) {
+            setTimeout(() => {
+              onAgentMessageComplete(completedMessage.content, completedMessage.userMessage || '');
+            }, 100);
+          }
+          return updated;
+        });
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -243,7 +263,18 @@ export function useAgentChat() {
       setSending(false);
       abortControllerRef.current = null;
     }
-  }, [agentMessage, sending, sessionId]);
+  }, [sending, sessionId, onAgentMessageComplete]);
+
+  const handleSendMessage = useCallback(async () => {
+    if (!agentMessage.trim()) return;
+    const currentMessage = agentMessage;
+    setAgentMessage('');
+    await sendMessageInternal(currentMessage);
+  }, [agentMessage, sendMessageInternal]);
+
+  const sendMessageDirectly = useCallback(async (content: string) => {
+    await sendMessageInternal(content);
+  }, [sendMessageInternal]);
 
   return {
     agentMessage,
@@ -252,6 +283,7 @@ export function useAgentChat() {
     sending,
     messagesEndRef,
     handleSendMessage,
+    sendMessageDirectly,
     handleClearContext,
   };
 }

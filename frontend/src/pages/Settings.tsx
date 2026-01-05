@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import Page from '@/components/Page';
-import { GeneralSettings, LLMSettings, AgentSettings } from '@/components/Settings';
+import { GeneralSettings, LLMSettings, AgentSettings, MemorySettings } from '@/components/Settings';
 
 export default function Settings() {
   return (
@@ -22,6 +22,11 @@ export default function Settings() {
             key: 'agent',
             label: 'Agent配置',
             children: <AgentSettings />,
+          },
+          {
+            key: 'memory',
+            label: 'Memory配置',
+            children: <MemorySettings />,
           },
         ]}
       />

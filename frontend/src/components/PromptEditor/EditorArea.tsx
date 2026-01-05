@@ -1,5 +1,6 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { Button } from 'antd';
+import { MessageOutlined, ConsoleSqlOutlined } from '@ant-design/icons';
 import Editor, { DiffEditor, OnMount, DiffOnMount } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import styles from './index.module.scss';
@@ -11,6 +12,16 @@ export interface ActionButton {
   type?: 'default' | 'primary';
 }
 
+export interface CodeReferenceInfo {
+  fileName: string;
+  lineRange: string;
+  content: string;
+}
+
+export interface EditorAreaRef {
+  navigateToLine: (lineRange: string) => void;
+}
+
 interface EditorAreaProps {
   content: string;
   onContentChange: (content: string) => void;
@@ -19,19 +30,28 @@ interface EditorAreaProps {
   originalContent?: string;
   modifiedContent?: string;
   hasPublished?: boolean;
+  onAddToChat?: (content: string | CodeReferenceInfo) => void;
+  fileName?: string;
 }
 
-export default function EditorArea({ 
+const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({ 
   content, 
   onContentChange, 
   actions = [],
   showDiff = false,
   originalContent = '',
   modifiedContent = '',
-  hasPublished = false
-}: EditorAreaProps) {
+  hasPublished = false,
+  onAddToChat,
+  fileName = 'editor'
+}, ref) => {
   const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const [selectedText, setSelectedText] = useState<string>('');
+  const [selectedRange, setSelectedRange] = useState<{ startLine: number; endLine: number } | null>(null);
+  const [buttonPosition, setButtonPosition] = useState<{ top: number; left: number } | null>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const navigateTimeoutsRef = useRef<{ focus?: NodeJS.Timeout; highlight?: NodeJS.Timeout }>({});
 
   const commonOptions = {
     minimap: { enabled: false },
@@ -44,9 +64,42 @@ export default function EditorArea({
     renderWhitespace: 'selection' as const,
   };
 
+  const updateSelectedText = (editor: monaco.editor.IStandaloneCodeEditor) => {
+    const selection = editor.getSelection();
+    if (selection && !selection.isEmpty()) {
+      const text = editor.getModel()?.getValueInRange(selection) || '';
+      setSelectedText(text);
+      
+      const startLine = selection.startLineNumber;
+      const endLine = selection.endLineNumber;
+      setSelectedRange({ startLine, endLine });
+      
+      if (text.trim() && editorContainerRef.current) {
+        const endPosition = selection.getEndPosition();
+        const coords = editor.getScrolledVisiblePosition(endPosition);
+        if (coords) {
+          const editorContainer = editorContainerRef.current;
+          const rect = editorContainer.getBoundingClientRect();
+          const top = rect.top + coords.top + 20;
+          const left = rect.left + coords.left;
+          setButtonPosition({ top, left });
+        }
+      } else {
+        setButtonPosition(null);
+      }
+    } else {
+      setSelectedText('');
+      setSelectedRange(null);
+      setButtonPosition(null);
+    }
+  };
+
   const handleDiffEditorMount: DiffOnMount = (editor) => {
     diffEditorRef.current = editor;
     const modifiedEditor = editor.getModifiedEditor();
+    
+    // 确保 modified editor 是可编辑的
+    modifiedEditor.updateOptions({ readOnly: false });
     
     modifiedEditor.onDidChangeModelContent(() => {
       const value = modifiedEditor.getValue();
@@ -54,11 +107,117 @@ export default function EditorArea({
         onContentChange(value);
       }
     });
+
+    modifiedEditor.onDidChangeCursorSelection(() => {
+      updateSelectedText(modifiedEditor);
+    });
+
+    modifiedEditor.onDidScrollChange(() => {
+      if (selectedText.trim()) {
+        updateSelectedText(modifiedEditor);
+      }
+    });
   };
 
   const handleEditorMount: OnMount = (editor) => {
     editorRef.current = editor;
+    
+    editor.onDidChangeCursorSelection(() => {
+      updateSelectedText(editor);
+    });
+
+    editor.onDidScrollChange(() => {
+      if (selectedText.trim()) {
+        updateSelectedText(editor);
+      }
+    });
   };
+
+  const getActiveEditor = useCallback(() => {
+    if (diffEditorRef.current) {
+      return diffEditorRef.current.getModifiedEditor();
+    }
+    return editorRef.current;
+  }, []);
+
+  const navigateToLine = useCallback((lineRange: string) => {
+    const editor = getActiveEditor();
+    if (!editor) return;
+
+    editor.updateOptions({ readOnly: false });
+
+    const match = lineRange.match(/(\d+)(?:-(\d+))?/);
+    if (!match) return;
+    
+    const parsedStart = parseInt(match[1], 10);
+    const parsedEnd = match[2] ? parseInt(match[2], 10) : parsedStart;
+
+    const model = editor.getModel();
+    if (!model) return;
+
+    const lineCount = model.getLineCount();
+    const startLine = Math.max(1, Math.min(parsedStart, lineCount));
+    const endLine = Math.max(startLine, Math.min(parsedEnd, lineCount));
+
+    editor.revealLineInCenter(startLine);
+
+    editor.setSelection({
+      startLineNumber: startLine,
+      startColumn: 1,
+      endLineNumber: endLine,
+      endColumn: model.getLineLength(endLine) + 1,
+    });
+
+    const decorations = editor.deltaDecorations([], [
+      {
+        range: new monaco.Range(startLine, 1, endLine, model.getLineLength(endLine) + 1),
+        options: {
+          className: styles.highlightedLine,
+          isWholeLine: true,
+        },
+      },
+    ]);
+
+    if (navigateTimeoutsRef.current.focus) {
+      clearTimeout(navigateTimeoutsRef.current.focus);
+    }
+    if (navigateTimeoutsRef.current.highlight) {
+      clearTimeout(navigateTimeoutsRef.current.highlight);
+    }
+
+    if (editorContainerRef.current) {
+      editorContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    navigateTimeoutsRef.current.focus = setTimeout(() => {
+      const currentEditor = getActiveEditor();
+      if (!currentEditor) return;
+
+      currentEditor.updateOptions({ readOnly: false });
+      currentEditor.revealLineInCenter(startLine);
+      
+      currentEditor.setPosition({
+        lineNumber: startLine,
+        column: 1,
+      });
+
+      currentEditor.focus();
+      
+      navigateTimeoutsRef.current.focus = undefined;
+    }, 100);
+
+    navigateTimeoutsRef.current.highlight = setTimeout(() => {
+      const currentEditor = getActiveEditor();
+      if (currentEditor) {
+        currentEditor.deltaDecorations(decorations, []);
+      }
+      navigateTimeoutsRef.current.highlight = undefined;
+    }, 2000);
+  }, [getActiveEditor]);
+
+  useImperativeHandle(ref, () => ({
+    navigateToLine,
+  }), [navigateToLine]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -87,6 +246,56 @@ export default function EditorArea({
     }
   }, [modifiedContent, showDiff, hasPublished, content]);
 
+  useEffect(() => {
+    if (!selectedText.trim()) return;
+
+    const updatePosition = () => {
+      const editor = showDiff 
+        ? diffEditorRef.current?.getModifiedEditor() 
+        : editorRef.current;
+      
+      if (editor && selectedText.trim()) {
+        updateSelectedText(editor);
+      }
+    };
+
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [selectedText, showDiff]);
+
+  // 清理 navigateToLine 的 timeout
+  useEffect(() => {
+    return () => {
+      if (navigateTimeoutsRef.current.focus) {
+        clearTimeout(navigateTimeoutsRef.current.focus);
+      }
+      if (navigateTimeoutsRef.current.highlight) {
+        clearTimeout(navigateTimeoutsRef.current.highlight);
+      }
+    };
+  }, []);
+
+  const handleAddToChat = () => {
+    if (onAddToChat && selectedText.trim() && selectedRange) {
+      const lineRange = selectedRange.startLine === selectedRange.endLine 
+        ? `${selectedRange.startLine}` 
+        : `${selectedRange.startLine}-${selectedRange.endLine}`;
+      
+      const codeRef: CodeReferenceInfo = {
+        fileName,
+        lineRange,
+        content: selectedText,
+      };
+      
+      onAddToChat(codeRef);
+    }
+  };
+
   return (
     <div className={styles.editorArea}>
       {actions.length > 0 && (
@@ -103,7 +312,7 @@ export default function EditorArea({
           ))}
         </div>
       )}
-      <div className={styles.editor}>
+      <div className={styles.editor} ref={editorContainerRef}>
         {showDiff ? (
           hasPublished ? (
             <DiffEditor
@@ -117,7 +326,7 @@ export default function EditorArea({
                 ...commonOptions,
                 renderSideBySide: false,
                 readOnly: false,
-              }}
+              } as any}
             />
           ) : (
             <div className={styles.noPublished}>
@@ -139,8 +348,34 @@ export default function EditorArea({
             }}
           />
         )}
+        {onAddToChat && buttonPosition && selectedText.trim() && (
+          <div
+            className={styles.floatingAddButton}
+            style={{
+              position: 'fixed',
+              top: `${buttonPosition.top}px`,
+              left: `${buttonPosition.left}px`,
+              zIndex: 1000,
+            }}
+          >
+            <button
+              className={styles.terminalButton}
+              onClick={handleAddToChat}
+              title="将选中内容添加到聊天"
+            >
+              <span className={styles.terminalIcon}>
+                <ConsoleSqlOutlined />
+              </span>
+              <span className={styles.terminalText}>添加到聊天</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+});
+
+EditorArea.displayName = 'EditorArea';
+
+export default EditorArea;
 

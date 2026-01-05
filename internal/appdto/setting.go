@@ -84,3 +84,39 @@ type AgentSetting struct {
 type UpdateAgentSettingReq struct {
 	*AgentConfig
 }
+
+type SimpleMemoryConfig struct {
+	MaxHistoryMessages int `json:"max_history_messages" yaml:"max_history_messages"`
+}
+
+type MongoDBMemoryConfig struct {
+	URI                string `json:"uri" yaml:"uri"`
+	Database           string `json:"database" yaml:"database"`
+	Collection         string `json:"collection" yaml:"collection"`
+	MaxHistoryMessages int    `json:"max_history_messages" yaml:"max_history_messages"`
+}
+
+type RedisMemoryConfig struct {
+	Host               string `json:"host" yaml:"host"`
+	Port               int    `json:"port" yaml:"port"`
+	Username           string `json:"username" yaml:"username"`
+	Password           string `json:"password" yaml:"password"`
+	DB                 int    `json:"db" yaml:"db"`
+	KeyPrefix          string `json:"key_prefix" yaml:"key_prefix"`
+	MaxHistoryMessages int    `json:"max_history_messages" yaml:"max_history_messages"`
+}
+
+type MemoryConfig struct {
+	Provider string              `json:"provider" yaml:"provider"` // simple, mongodb, redis
+	Simple   SimpleMemoryConfig  `json:"simple" yaml:"simple"`
+	MongoDB  MongoDBMemoryConfig `json:"mongodb" yaml:"mongodb"`
+	Redis    RedisMemoryConfig   `json:"redis" yaml:"redis"`
+}
+
+type MemorySetting struct {
+	*MemoryConfig
+}
+
+type UpdateMemorySettingReq struct {
+	*MemoryConfig
+}

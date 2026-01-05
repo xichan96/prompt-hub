@@ -25,6 +25,9 @@ type AppIer interface {
 	// agent 设置，如果不存在要插入到 setting 表中
 	GetAgentSetting(ctx context.Context) (*appdto.AgentSetting, error)
 	UpdateAgentSetting(ctx context.Context, req *appdto.UpdateAgentSettingReq) error
+	// memory 设置，如果不存在要插入到 setting 表中
+	GetMemorySetting(ctx context.Context) (*appdto.MemorySetting, error)
+	UpdateMemorySetting(ctx context.Context, req *appdto.UpdateMemorySettingReq) error
 }
 
 type app struct {
@@ -122,6 +125,48 @@ func (a *app) UpdateLLMSetting(ctx context.Context, req *appdto.UpdateLLMSetting
 		if errors.Is(err, gorm.ErrRecordNotFound) || ec.IsErrCode(err, ec.NoFound) {
 			setting = &model.Setting{
 				Group: "llm",
+				Key:   "config",
+				Value: string(valueBytes),
+			}
+			_, err = a.sp.Create(ctx, setting)
+			return err
+		}
+		return err
+	}
+	setting.Value = string(valueBytes)
+	return a.sp.Update(ctx, setting, options...)
+}
+
+func (a *app) GetMemorySetting(ctx context.Context) (*appdto.MemorySetting, error) {
+	options := make([]func(*gorm.DB) *gorm.DB, 0)
+	options = append(options, a.sp.Where(a.sp.F().Group.Eq("memory"), a.sp.F().Key.Eq("config")))
+	setting, err := a.sp.GetBy(ctx, options...)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || ec.IsErrCode(err, ec.NoFound) {
+			memoryConfig := &appdto.MemoryConfig{}
+			return &appdto.MemorySetting{MemoryConfig: memoryConfig}, nil
+		}
+		return nil, err
+	}
+	memoryConfig := &appdto.MemoryConfig{}
+	if err := json.Unmarshal([]byte(setting.Value), memoryConfig); err != nil {
+		return nil, err
+	}
+	return &appdto.MemorySetting{MemoryConfig: memoryConfig}, nil
+}
+
+func (a *app) UpdateMemorySetting(ctx context.Context, req *appdto.UpdateMemorySettingReq) error {
+	valueBytes, err := json.Marshal(req.MemoryConfig)
+	if err != nil {
+		return err
+	}
+	options := make([]func(*gorm.DB) *gorm.DB, 0)
+	options = append(options, a.sp.Where(a.sp.F().Group.Eq("memory"), a.sp.F().Key.Eq("config")))
+	setting, err := a.sp.GetBy(ctx, options...)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || ec.IsErrCode(err, ec.NoFound) {
+			setting = &model.Setting{
+				Group: "memory",
 				Key:   "config",
 				Value: string(valueBytes),
 			}

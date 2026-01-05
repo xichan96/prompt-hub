@@ -31,6 +31,46 @@ func CreateSettingAPI(c *gin.Context) {
 	gx.JSONSuccess(c, nil)
 }
 
+// GetMemorySettingAPI    获取Memory配置 godoc
+// @Summary               获取Memory配置
+// @Description           获取Memory配置信息
+// @Tags                  配置管理
+// @Accept                json
+// @Produce               json
+// @Success               200     {object}    appdto.MemorySetting  "获取成功"
+// @Router                /api/settings/memory [get]
+func GetMemorySettingAPI(c *gin.Context) {
+	setting, err := di.SettingApp.GetMemorySetting(c)
+	if err != nil {
+		gx.JSONErr(c, err)
+		return
+	}
+	gx.JSONSuccess(c, setting)
+}
+
+// UpdateMemorySettingAPI 更新Memory配置 godoc
+// @Summary               更新Memory配置
+// @Description           更新Memory配置信息
+// @Tags                  配置管理
+// @Accept                json
+// @Produce               json
+// @Param                 body    body        appdto.UpdateMemorySettingReq true    "Memory配置信息"
+// @Success               200     {object}    appdto.EmptyResponse        "更新成功"
+// @Router                /api/settings/memory [put]
+func UpdateMemorySettingAPI(c *gin.Context) {
+	var req appdto.UpdateMemorySettingReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		gx.JSONErr(c, gx.BErr(err))
+		return
+	}
+	err := di.SettingApp.UpdateMemorySetting(c, &req)
+	if err != nil {
+		gx.JSONErr(c, err)
+		return
+	}
+	gx.JSONSuccess(c, nil)
+}
+
 // UpdateSettingAPI       更新配置 godoc
 // @Summary                更新配置
 // @Description            更新配置项

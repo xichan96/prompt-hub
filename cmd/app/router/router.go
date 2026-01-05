@@ -48,6 +48,8 @@ func RegisterAPIRouter(r *gin.Engine) {
 			settings.PUT("/llm", handler.UpdateLLMSettingAPI)
 			settings.GET("/agent", handler.GetAgentSettingAPI)
 			settings.PUT("/agent", handler.UpdateAgentSettingAPI)
+			settings.GET("/memory", handler.GetMemorySettingAPI)
+			settings.PUT("/memory", handler.UpdateMemorySettingAPI)
 		}
 
 		agent := api.Group("/agent", middleware.Auth())
