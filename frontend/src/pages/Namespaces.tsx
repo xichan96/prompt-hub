@@ -1,17 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Card, Table, Button, Space, message, Flex, Popconfirm, Form, Input, Modal, TableColumnsType, Tabs } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { createNamespace, deleteNamespace, getNamespaces, updateNamespace, Namespace, CreateNamespaceRequest, UpdateNamespaceRequest } from '@/apis/namespace';
-import { createPrompt, deletePrompt, getPromptList, updatePrompt, Prompt, CreatePromptRequest, UpdatePromptRequest } from '@/apis/prompt';
+import { useState, useEffect } from 'react';
+import { Card, Table, Button, Space, Flex, Popconfirm, Form, Input, Modal, TableColumnsType, Tabs } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, HistoryOutlined } from '@ant-design/icons';
+import { Prompt, CreatePromptRequest } from '@/apis/prompt';
+import { Namespace, CreateNamespaceRequest, UpdateNamespaceRequest } from '@/apis/namespace';
 import Page from '@/components/Page';
+import PromptEditor from '@/components/PromptEditor';
 import dayjs from 'dayjs';
+import { useNamespaceList, usePromptList } from '@/hooks';
 
 export default function Namespaces() {
-  const [loading, setLoading] = useState(false);
-  const [promptLoading, setPromptLoading] = useState(false);
-  const [namespaces, setNamespaces] = useState<Namespace[]>([]);
   const [activeNamespaceId, setActiveNamespaceId] = useState<string>('');
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [editingNamespace, setEditingNamespace] = useState<Namespace | null>(null);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [namespaceModalVisible, setNamespaceModalVisible] = useState(false);
@@ -19,44 +17,18 @@ export default function Namespaces() {
   const [namespaceForm] = Form.useForm();
   const [promptForm] = Form.useForm();
   const [filterName, setFilterName] = useState<string>('');
+  const [editorContent, setEditorContent] = useState<string>('');
+  const [editorPrompt, setEditorPrompt] = useState<Prompt | null>(null);
+  const [showVersionList, setShowVersionList] = useState<boolean>(false);
 
-  const getNamespaceList = async () => {
-    try {
-      setLoading(true);
-      const res = await getNamespaces();
-      setNamespaces(res);
-      if (res.length > 0 && !activeNamespaceId) {
-        setActiveNamespaceId(res[0].id);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getPromptListData = async () => {
-    if (!activeNamespaceId) return;
-    try {
-      setPromptLoading(true);
-      const params: { name?: string } = {};
-      if (filterName) params.name = filterName;
-      const res = await getPromptList(activeNamespaceId, params);
-      setPrompts(res);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setPromptLoading(false);
-    }
-  };
+  const { namespaces, loading, fetchNamespaces, handleDelete: handleDeleteNamespace, handleCreate: handleCreateNamespace, handleUpdate: handleUpdateNamespace } = useNamespaceList();
+  const { prompts, loading: promptLoading, fetchPrompts, handleDelete: handleDeletePrompt, handleCreate: handleCreatePrompt, handleUpdate: handleUpdatePrompt, handlePublish: handlePublishPrompt, loadPrompt } = usePromptList(activeNamespaceId, filterName);
 
   useEffect(() => {
-    getNamespaceList();
-  }, []);
-
-  useEffect(() => {
-    getPromptListData();
-  }, [activeNamespaceId, filterName]);
+    if (namespaces.length > 0 && !activeNamespaceId) {
+      setActiveNamespaceId(namespaces[0].id);
+    }
+  }, [namespaces, activeNamespaceId]);
 
   const handleEditNamespace = (record: Namespace) => {
     setEditingNamespace(record);
@@ -64,73 +36,65 @@ export default function Namespaces() {
     setNamespaceModalVisible(true);
   };
 
-  const handleDeleteNamespace = async (id: string) => {
-    try {
-      await deleteNamespace(id);
-      message.success('删除成功');
-      getNamespaceList();
-      if (activeNamespaceId === id && namespaces.length > 1) {
-        const nextNs = namespaces.find(ns => ns.id !== id);
-        if (nextNs) {
-          setActiveNamespaceId(nextNs.id);
-        }
+  const handleDeleteNamespaceWithSwitch = async (id: string) => {
+    await handleDeleteNamespace(id);
+    if (activeNamespaceId === id && namespaces.length > 1) {
+      const nextNs = namespaces.find(ns => ns.id !== id);
+      if (nextNs) {
+        setActiveNamespaceId(nextNs.id);
       }
-    } catch (error) {
-      message.error('删除失败');
     }
   };
 
   const handleSubmitNamespace = async (values: CreateNamespaceRequest | UpdateNamespaceRequest) => {
-    try {
-      if (editingNamespace) {
-        await updateNamespace(editingNamespace.id, { ...values, id: editingNamespace.id });
-        message.success('更新成功');
-      } else {
-        await createNamespace(values as CreateNamespaceRequest);
-        message.success('创建成功');
-      }
-      getNamespaceList();
-      setNamespaceModalVisible(false);
-      namespaceForm.resetFields();
-      setEditingNamespace(null);
-    } catch (error) {
-      message.error(editingNamespace ? '更新失败' : '创建失败');
+    if (editingNamespace) {
+      await handleUpdateNamespace(editingNamespace.id, values as UpdateNamespaceRequest);
+    } else {
+      await handleCreateNamespace(values as CreateNamespaceRequest);
+    }
+    setNamespaceModalVisible(false);
+    namespaceForm.resetFields();
+    setEditingNamespace(null);
+  };
+
+  const handleEditPrompt = async (record: Prompt) => {
+    const data = await loadPrompt(record.id);
+    if (data) {
+      setEditorPrompt(data);
+      setEditorContent(data.content || '');
+      setEditingPrompt(data);
+      setPromptModalVisible(true);
     }
   };
 
-  const handleEditPrompt = (record: Prompt) => {
-    setEditingPrompt(record);
-    promptForm.setFieldsValue({ ...record });
-    setPromptModalVisible(true);
-  };
-
-  const handleDeletePrompt = async (id: string) => {
-    if (!activeNamespaceId) return;
-    try {
-      await deletePrompt(activeNamespaceId, id);
-      message.success('删除成功');
-      getPromptListData();
-    } catch (error) {
-      message.error('删除失败');
+  const handleSubmitPrompt = async () => {
+    if (!editingPrompt) return;
+    const success = await handleUpdatePrompt(editingPrompt.id, editorContent);
+    if (success) {
+      setPromptModalVisible(false);
+      setEditingPrompt(null);
+      setEditorPrompt(null);
+      setEditorContent('');
     }
   };
 
-  const handleSubmitPrompt = async (values: CreatePromptRequest | UpdatePromptRequest) => {
-    if (!activeNamespaceId) return;
-    try {
-      if (editingPrompt) {
-        await updatePrompt(activeNamespaceId, editingPrompt.id, { ...values, id: editingPrompt.id });
-        message.success('更新成功');
-      } else {
-        await createPrompt(activeNamespaceId, values as CreatePromptRequest);
-        message.success('创建成功');
-      }
-      getPromptListData();
+  const handleCreatePromptSubmit = async (values: CreatePromptRequest) => {
+    const success = await handleCreatePrompt(values);
+    if (success) {
       setPromptModalVisible(false);
       promptForm.resetFields();
-      setEditingPrompt(null);
-    } catch (error) {
-      message.error(editingPrompt ? '更新失败' : '创建失败');
+    }
+  };
+
+  const handlePublishPromptWithRefresh = async () => {
+    if (!editingPrompt) return;
+    const success = await handlePublishPrompt(editingPrompt.id);
+    if (success) {
+      const data = await loadPrompt(editingPrompt.id);
+      if (data) {
+        setEditorPrompt(data);
+        setEditorContent(data.content || '');
+      }
     }
   };
 
@@ -251,6 +215,8 @@ export default function Namespaces() {
                 onClick={() => {
                   promptForm.resetFields();
                   setEditingPrompt(null);
+                  setEditorPrompt(null);
+                  setEditorContent('');
                   setPromptModalVisible(true);
                 }}
               >
@@ -305,42 +271,80 @@ export default function Namespaces() {
       </Modal>
 
       <Modal
-        title={editingPrompt ? '编辑提示词' : '新增提示词'}
+        title={
+          editingPrompt ? (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>编辑提示词</span>
+              <HistoryOutlined 
+                style={{ cursor: 'pointer' }}
+                onClick={() => setShowVersionList(!showVersionList)}
+              />
+            </span>
+          ) : (
+            '新增提示词'
+          )
+        }
         open={promptModalVisible}
         onCancel={() => {
           setPromptModalVisible(false);
           promptForm.resetFields();
           setEditingPrompt(null);
+          setEditorPrompt(null);
+          setEditorContent('');
         }}
-        onOk={() => promptForm.submit()}
-        width={800}
+        onOk={() => {
+          if (editingPrompt) {
+            handleSubmitPrompt();
+          } else {
+            promptForm.submit();
+          }
+        }}
+        footer={editingPrompt ? null : undefined}
+        width="95%"
+        style={{ top: 20 }}
+        bodyStyle={{ height: 'calc(100vh - 120px)', padding: 0 }}
+        destroyOnClose
       >
-        <Form
-          form={promptForm}
-          layout="vertical"
-          onFinish={handleSubmitPrompt}
-        >
-          <Form.Item
-            name="name"
-            label="名称"
-            rules={[{ required: true, message: '请输入名称' }]}
-          >
-            <Input placeholder="请输入名称" disabled={!!editingPrompt} />
-          </Form.Item>
-          <Form.Item
-            name="description"
-            label="描述"
-          >
-            <Input.TextArea placeholder="请输入描述" rows={3} />
-          </Form.Item>
-          <Form.Item
-            name="content"
-            label="内容"
-            rules={[{ required: true, message: '请输入内容' }]}
-          >
-            <Input.TextArea placeholder="请输入提示词内容" rows={10} />
-          </Form.Item>
-        </Form>
+        {editingPrompt ? (
+          <PromptEditor
+            prompt={editorPrompt}
+            content={editorContent}
+            onContentChange={setEditorContent}
+            onPublish={handlePublishPromptWithRefresh}
+            namespaceId={activeNamespaceId}
+            promptId={editingPrompt.id}
+            showVersionList={showVersionList}
+          />
+        ) : (
+          <div style={{ padding: 24 }}>
+            <Form
+              form={promptForm}
+              layout="vertical"
+              onFinish={handleCreatePromptSubmit}
+            >
+              <Form.Item
+                name="name"
+                label="名称"
+                rules={[{ required: true, message: '请输入名称' }]}
+              >
+                <Input placeholder="请输入名称" />
+              </Form.Item>
+              <Form.Item
+                name="description"
+                label="描述"
+              >
+                <Input.TextArea placeholder="请输入描述" rows={3} />
+              </Form.Item>
+              <Form.Item
+                name="content"
+                label="内容"
+                rules={[{ required: true, message: '请输入内容' }]}
+              >
+                <Input.TextArea placeholder="请输入提示词内容" rows={10} />
+              </Form.Item>
+            </Form>
+          </div>
+        )}
       </Modal>
     </Page>
   );

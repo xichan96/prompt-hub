@@ -1,20 +1,31 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button, Input, message, Avatar } from 'antd';
 import { useParams, useNavigate } from 'react-router';
-import { getPrompt, updatePrompt, publishPrompt, Prompt, UpdatePromptRequest } from '@/apis/prompt';
+import { getPrompt, publishPrompt, Prompt } from '@/apis/prompt';
+import { agentChat, AgentChatRequest } from '@/apis/agent';
 import styles from './PromptEditor.module.scss';
-import { SendOutlined, SaveOutlined } from '@ant-design/icons';
+import { SendOutlined } from '@ant-design/icons';
+
+type VersionType = 'edit' | 'current' | 'history';
+
+interface VersionItem {
+  id: string;
+  type: VersionType;
+  label: string;
+}
 
 export default function PromptEditor() {
   const { namespaceId, promptId } = useParams<{ namespaceId: string; promptId: string }>();
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [content, setContent] = useState('');
-  const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [selectedVersion, setSelectedVersion] = useState<VersionType>('edit');
   const [agentMessage, setAgentMessage] = useState('');
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'agent'; content: string }>>([]);
+  const [sending, setSending] = useState(false);
+  const [sessionId, setSessionId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,29 +46,9 @@ export default function PromptEditor() {
       const data = await getPrompt(namespaceId, promptId);
       setPrompt(data);
       setContent(data.content || '');
-      setDescription(data.description || '');
     } catch (error) {
       message.error('加载提示词失败');
       navigate(-1);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!namespaceId || !promptId) return;
-    try {
-      setLoading(true);
-      const data: UpdatePromptRequest = {
-        id: promptId,
-        content,
-        description,
-      };
-      await updatePrompt(namespaceId, promptId, data);
-      message.success('保存成功');
-      loadPrompt();
-    } catch (error) {
-      message.error('保存失败');
     } finally {
       setLoading(false);
     }
@@ -77,17 +68,45 @@ export default function PromptEditor() {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!agentMessage.trim()) return;
-    const userMessage = { role: 'user' as const, content: agentMessage };
-    setMessages([...messages, userMessage]);
-    setAgentMessage('');
+  const handleSendMessage = async () => {
+    if (!agentMessage.trim() || sending) return;
     
-    setTimeout(() => {
-      const agentResponse = { role: 'agent' as const, content: '这是一个示例回复。实际功能需要后端API支持。' };
+    const userMessage = { role: 'user' as const, content: agentMessage };
+    setMessages(prev => [...prev, userMessage]);
+    const currentMessage = agentMessage;
+    setAgentMessage('');
+    setSending(true);
+
+    try {
+      const requestData: AgentChatRequest = {
+        message: currentMessage,
+      };
+      if (sessionId) {
+        requestData.session_id = sessionId;
+      }
+
+      const response = await agentChat(requestData);
+      
+      if (response.session_id && !sessionId) {
+        setSessionId(response.session_id);
+      }
+
+      const agentResponse = { role: 'agent' as const, content: response.content || '' };
       setMessages(prev => [...prev, agentResponse]);
-    }, 500);
+    } catch (error) {
+      message.error('发送消息失败');
+      setMessages(prev => prev.filter(msg => msg !== userMessage));
+    } finally {
+      setSending(false);
+    }
   };
+
+  const versions: VersionItem[] = [
+    { id: 'edit', type: 'edit', label: '编辑版本' },
+    { id: 'current', type: 'current', label: '当前版本' },
+    { id: 'history2', type: 'history', label: '历史版本2' },
+    { id: 'history1', type: 'history', label: '历史版本1' },
+  ];
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -112,21 +131,19 @@ export default function PromptEditor() {
       <div className={styles.content}>
         <div className={styles.sidebar}>
           <div className={styles.versionList}>
-            <div className={styles.versionItem}>编辑版本</div>
-            <div className={styles.versionItem}>当前版本</div>
-            <div className={styles.versionItem}>历史版本2</div>
-            <div className={styles.versionItem}>历史版本1</div>
+            {versions.map((version) => (
+              <div
+                key={version.id}
+                className={`${styles.versionItem} ${selectedVersion === version.type ? styles.active : ''}`}
+                onClick={() => setSelectedVersion(version.type)}
+              >
+                {version.label}
+              </div>
+            ))}
           </div>
         </div>
         <div className={styles.editorArea}>
           <div className={styles.editorHeader}>
-            <Button
-              icon={<SaveOutlined />}
-              onClick={handleSave}
-              loading={loading}
-            >
-              保存
-            </Button>
             <Button
               type="primary"
               onClick={handlePublish}
@@ -178,6 +195,8 @@ export default function PromptEditor() {
               icon={<SendOutlined />}
               onClick={handleSendMessage}
               className={styles.sendButton}
+              loading={sending}
+              disabled={sending}
             >
               发送
             </Button>

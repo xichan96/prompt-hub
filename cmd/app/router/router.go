@@ -47,5 +47,12 @@ func RegisterAPIRouter(r *gin.Engine) {
 			settings.GET("/llm", handler.GetLLMSettingAPI)
 			settings.PUT("/llm", handler.UpdateLLMSettingAPI)
 		}
+
+		agent := api.Group("/agent", middleware.Auth())
+		{
+			agent.POST("/session", handler.AgentSessionAPI)
+			agent.POST("/chat", handler.AgentChatAPI)
+			agent.POST("/chat/stream", handler.AgentStreamChatAPI)
+		}
 	}
 }

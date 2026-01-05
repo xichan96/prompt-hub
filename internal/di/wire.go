@@ -5,6 +5,7 @@ package di
 
 import (
 	"github.com/google/wire"
+	"github.com/xichan96/prompt-hub/internal/app/agent"
 	"github.com/xichan96/prompt-hub/internal/app/namespace"
 	"github.com/xichan96/prompt-hub/internal/app/prompt"
 	"github.com/xichan96/prompt-hub/internal/app/setting"
@@ -45,5 +46,15 @@ func NewSettingApp() setting.AppIer {
 	panic(wire.Build(
 		persist.NewSettingPersist,
 		setting.NewApp,
+	))
+}
+
+var AgentApp = NewAgentApp()
+
+func NewAgentApp() agent.AppIer {
+	panic(wire.Build(
+		persist.NewSettingPersist,
+		setting.NewApp,
+		agent.NewApp,
 	))
 }

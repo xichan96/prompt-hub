@@ -7,6 +7,7 @@
 package di
 
 import (
+	"github.com/xichan96/prompt-hub/internal/app/agent"
 	"github.com/xichan96/prompt-hub/internal/app/namespace"
 	"github.com/xichan96/prompt-hub/internal/app/prompt"
 	"github.com/xichan96/prompt-hub/internal/app/setting"
@@ -40,6 +41,13 @@ func NewSettingApp() setting.AppIer {
 	return appIer
 }
 
+func NewAgentApp() agent.AppIer {
+	settingPersistIer := persist.NewSettingPersist()
+	appIer := setting.NewApp(settingPersistIer)
+	agentAppIer := agent.NewApp(appIer)
+	return agentAppIer
+}
+
 // wire.go:
 
 var PromptApp = NewPromptApp()
@@ -49,3 +57,5 @@ var UserApp = NewUserApp()
 var NamespaceApp = NewNamespaceApp()
 
 var SettingApp = NewSettingApp()
+
+var AgentApp = NewAgentApp()
