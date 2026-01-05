@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Table, Button, Space, message, Flex, Popconfirm, Form, Input, Modal, TableColumnsType, Select, Tabs } from 'antd';
+import { Card, Table, Button, Space, message, Flex, Popconfirm, Form, Input, Modal, TableColumnsType, Tabs } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { createNamespace, deleteNamespace, getNamespaces, updateNamespace, Namespace, CreateNamespaceRequest, UpdateNamespaceRequest } from '@/apis/namespace';
 import { createPrompt, deletePrompt, getPromptList, updatePrompt, Prompt, CreatePromptRequest, UpdatePromptRequest } from '@/apis/prompt';
@@ -19,7 +19,6 @@ export default function Namespaces() {
   const [namespaceForm] = Form.useForm();
   const [promptForm] = Form.useForm();
   const [filterName, setFilterName] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
 
   const getNamespaceList = async () => {
     try {
@@ -40,9 +39,8 @@ export default function Namespaces() {
     if (!activeNamespaceId) return;
     try {
       setPromptLoading(true);
-      const params: { name?: string; status?: string } = {};
+      const params: { name?: string } = {};
       if (filterName) params.name = filterName;
-      if (filterStatus) params.status = filterStatus;
       const res = await getPromptList(activeNamespaceId, params);
       setPrompts(res);
     } catch (error) {
@@ -58,7 +56,7 @@ export default function Namespaces() {
 
   useEffect(() => {
     getPromptListData();
-  }, [activeNamespaceId, filterName, filterStatus]);
+  }, [activeNamespaceId, filterName]);
 
   const handleEditNamespace = (record: Namespace) => {
     setEditingNamespace(record);
@@ -142,6 +140,15 @@ export default function Namespaces() {
       dataIndex: 'name',
       key: 'name',
       align: 'center',
+      render: (text: string, record: Prompt) => (
+        <Button
+          type="link"
+          onClick={() => handleEditPrompt(record)}
+          style={{ padding: 0 }}
+        >
+          {text}
+        </Button>
+      ),
     },
     {
       title: '描述',
@@ -235,17 +242,6 @@ export default function Namespaces() {
                 style={{ width: 200 }}
                 allowClear
               />
-              <Select
-                placeholder="筛选"
-                value={filterStatus}
-                onChange={setFilterStatus}
-                style={{ width: 150 }}
-                allowClear
-              >
-                <Select.Option value="draft">草稿</Select.Option>
-                <Select.Option value="published">已发布</Select.Option>
-                <Select.Option value="archived">已归档</Select.Option>
-              </Select>
             </Space>
             <Space>
               <div>共{prompts.length}个提示词</div>

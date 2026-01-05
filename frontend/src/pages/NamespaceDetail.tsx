@@ -35,7 +35,7 @@ export default function NamespaceDetail() {
     if (!namespaceId) return;
     try {
       setLoading(true);
-      const params: { name?: string; status?: string } = { status: 'draft' };
+      const params: { name?: string } = {};
       if (filterName) params.name = filterName;
       const res = await getPromptList(namespaceId, params);
       setPrompts(res);
@@ -103,6 +103,15 @@ export default function NamespaceDetail() {
       dataIndex: 'name',
       key: 'name',
       align: 'center',
+      render: (text: string, record: Prompt) => (
+        <Button
+          type="link"
+          onClick={() => handleEdit(record)}
+          style={{ padding: 0 }}
+        >
+          {text}
+        </Button>
+      ),
     },
     {
       title: '描述',
