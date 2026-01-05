@@ -128,14 +128,16 @@ export default function NamespaceDetail() {
     {
       title: '操作',
       key: 'action',
-      width: 150,
+      width: 180,
       align: 'center',
+      fixed: 'right',
       render: (_, record) => (
-        <Space size="middle">
+        <Space size="small" wrap>
           <Button
             type="link"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
+            style={{ padding: 0 }}
           >
             编辑
           </Button>
@@ -145,7 +147,7 @@ export default function NamespaceDetail() {
             okText="确定"
             cancelText="取消"
           >
-            <Button type="link" danger icon={<DeleteOutlined />}>
+            <Button type="link" danger icon={<DeleteOutlined />} style={{ padding: 0 }}>
               删除
             </Button>
           </Popconfirm>
