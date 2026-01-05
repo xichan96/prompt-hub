@@ -75,10 +75,10 @@ export function usePromptList(namespaceId: string, filterName?: string) {
     }
   }, [namespaceId, fetchPrompts]);
 
-  const handlePublish = useCallback(async (id: string) => {
+  const handlePublish = useCallback(async (id: string, description?: string) => {
     if (!namespaceId) return;
     try {
-      await publishPrompt(namespaceId, id);
+      await publishPrompt(namespaceId, id, description);
       message.success('发布成功');
       fetchPrompts();
       return true;

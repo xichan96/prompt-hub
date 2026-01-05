@@ -41,6 +41,7 @@ func main() {
 	migrate.MigrateTable()
 	initAdminUser()
 	initLLMSetting()
+	initAgentSetting()
 	s := gx.NewServer()
 	router.RegisterAPIRouter(s.Engine)
 	s.Run()
@@ -118,5 +119,30 @@ func initLLMSetting() {
 			log.Fatal(err)
 		}
 		log.Info("LLM setting initialized")
+	}
+}
+
+func initAgentSetting() {
+	ctx := context.Background()
+	settingApp := di.SettingApp
+
+	agentSetting, err := settingApp.GetAgentSetting(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if agentSetting == nil || agentSetting.AgentConfig == nil || agentSetting.AgentConfig.Name == "" {
+		defaultConfig := &appdto.UpdateAgentSettingReq{
+			AgentConfig: &appdto.AgentConfig{
+				Name:   "",
+				Prompt: "",
+				Tools:  []string{},
+			},
+		}
+		err = settingApp.UpdateAgentSetting(ctx, defaultConfig)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Info("Agent setting initialized")
 	}
 }

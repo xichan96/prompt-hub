@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Modal, Input } from 'antd';
 import { Prompt } from '@/apis/prompt';
 import styles from './index.module.scss';
 import EditorHeader from './EditorHeader';
@@ -22,6 +23,8 @@ export default function PromptEditor({ prompt, content, onContentChange, onPubli
   const [selectedVersion, setSelectedVersion] = useState<VersionType>('diff');
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | undefined>();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [publishModalVisible, setPublishModalVisible] = useState(false);
+  const [publishDescription, setPublishDescription] = useState('');
 
   const { publishing, saving, handleSave, handlePublish } = usePromptOperations(namespaceId, promptId);
   const { publishedContent, hasPublished, loadPublishedContent } = usePromptVersions(namespaceId, prompt?.name);
@@ -34,16 +37,23 @@ export default function PromptEditor({ prompt, content, onContentChange, onPubli
     }
   }, [handleSave, content, selectedVersion, namespaceId, prompt?.name, loadPublishedContent]);
 
-  const onPublishHandler = useCallback(async () => {
-    const success = await handlePublish();
+  const onPublishClick = useCallback(() => {
+    setPublishDescription(prompt?.description || '');
+    setPublishModalVisible(true);
+  }, [prompt?.description]);
+
+  const onPublishConfirm = useCallback(async () => {
+    const success = await handlePublish(publishDescription);
     if (success) {
+      setPublishModalVisible(false);
+      setPublishDescription('');
       onPublish?.();
       if (selectedVersion === 'edit' || selectedVersion === 'diff') {
         await loadPublishedContent();
       }
       setRefreshTrigger(prev => prev + 1);
     }
-  }, [handlePublish, onPublish, selectedVersion, loadPublishedContent]);
+  }, [handlePublish, publishDescription, onPublish, selectedVersion, loadPublishedContent]);
 
   useEffect(() => {
     if (namespaceId && prompt?.name) {
@@ -82,14 +92,14 @@ export default function PromptEditor({ prompt, content, onContentChange, onPubli
     if (promptId && selectedVersion === 'diff') {
       actions.push({
         label: '发布',
-        onClick: onPublishHandler,
+        onClick: onPublishClick,
         loading: publishing,
         type: 'primary',
       });
     }
     
     return actions;
-  }, [promptId, selectedVersion, onSave, saving, onPublishHandler, publishing]);
+  }, [promptId, selectedVersion, onSave, saving, onPublishClick, publishing]);
 
   const displayContent = useMemo(() => {
     if (selectedVersion === 'history') return historyContent;
@@ -142,6 +152,27 @@ export default function PromptEditor({ prompt, content, onContentChange, onPubli
         />
         <AgentChat />
       </div>
+      <Modal
+        title="发布提示词"
+        open={publishModalVisible}
+        onOk={onPublishConfirm}
+        onCancel={() => {
+          setPublishModalVisible(false);
+          setPublishDescription('');
+        }}
+        confirmLoading={publishing}
+        okText="发布"
+        cancelText="取消"
+      >
+        <Input.TextArea
+          placeholder="请输入发布描述（可选）"
+          value={publishDescription}
+          onChange={(e) => setPublishDescription(e.target.value)}
+          rows={4}
+          maxLength={255}
+          showCount
+        />
+      </Modal>
     </div>
   );
 }

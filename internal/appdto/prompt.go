@@ -22,7 +22,8 @@ type UpdatePromptDraftReq struct {
 }
 
 type PublishPromptReq struct {
-	ID string `json:"id"`
+	ID          string `json:"id"`
+	Description string `json:"description" validate:"omitempty,min=1,max=255"`
 }
 
 type DeletePromptReq struct {

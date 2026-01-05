@@ -39,6 +39,6 @@ export const getPrompt = (namespaceId: string, promptId: string) =>
 export const getPromptList = (namespaceId: string, params?: { name?: string; status?: string }) => 
   request.get<Prompt[]>(`/namespaces/${namespaceId}/prompts`, { params });
 
-export const publishPrompt = (namespaceId: string, promptId: string) => 
-  request.post(`/namespaces/${namespaceId}/prompts/${promptId}/publish`);
+export const publishPrompt = (namespaceId: string, promptId: string, description?: string) => 
+  request.post(`/namespaces/${namespaceId}/prompts/${promptId}/publish`, { description });
 

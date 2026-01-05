@@ -99,10 +99,19 @@ func (a *app) PublishPrompt(ctx context.Context, req *appdto.PublishPromptReq) e
 	}
 
 	nowTime := time.Now()
+	description := draft.Description
+	if req.Description != "" {
+		description = req.Description
+		draft.Description = req.Description
+		draft.UpdatedAt = nowTime
+		if err := a.pp.Update(ctx, draft); err != nil {
+			return err
+		}
+	}
 	newPublished := &model.Prompt{
 		NamespaceID: draft.NamespaceID,
 		Name:        draft.Name,
-		Description: draft.Description,
+		Description: description,
 		Content:     draft.Content,
 		Status:      appdto.PromptStatusPublished,
 		CreatedBy:   draft.CreatedBy,

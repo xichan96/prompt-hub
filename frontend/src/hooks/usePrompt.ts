@@ -23,11 +23,11 @@ export function usePromptOperations(namespaceId: string, promptId?: string) {
     }
   }, [namespaceId, promptId]);
 
-  const handlePublish = useCallback(async () => {
+  const handlePublish = useCallback(async (description?: string) => {
     if (!namespaceId || !promptId) return;
     try {
       setPublishing(true);
-      await publishPrompt(namespaceId, promptId);
+      await publishPrompt(namespaceId, promptId, description);
       message.success('发布成功');
       return true;
     } catch (error) {

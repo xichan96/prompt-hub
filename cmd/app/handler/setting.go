@@ -162,3 +162,43 @@ func UpdateLLMSettingAPI(c *gin.Context) {
 	}
 	gx.JSONSuccess(c, nil)
 }
+
+// GetAgentSettingAPI     获取Agent配置 godoc
+// @Summary               获取Agent配置
+// @Description           获取Agent配置信息
+// @Tags                  配置管理
+// @Accept                json
+// @Produce               json
+// @Success               200     {object}    appdto.AgentSetting  "获取成功"
+// @Router                /api/settings/agent [get]
+func GetAgentSettingAPI(c *gin.Context) {
+	setting, err := di.SettingApp.GetAgentSetting(c)
+	if err != nil {
+		gx.JSONErr(c, err)
+		return
+	}
+	gx.JSONSuccess(c, setting)
+}
+
+// UpdateAgentSettingAPI  更新Agent配置 godoc
+// @Summary               更新Agent配置
+// @Description           更新Agent配置信息
+// @Tags                  配置管理
+// @Accept                json
+// @Produce               json
+// @Param                 body    body        appdto.UpdateAgentSettingReq true    "Agent配置信息"
+// @Success               200     {object}    appdto.EmptyResponse        "更新成功"
+// @Router                /api/settings/agent [put]
+func UpdateAgentSettingAPI(c *gin.Context) {
+	var req appdto.UpdateAgentSettingReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		gx.JSONErr(c, gx.BErr(err))
+		return
+	}
+	err := di.SettingApp.UpdateAgentSetting(c, &req)
+	if err != nil {
+		gx.JSONErr(c, err)
+		return
+	}
+	gx.JSONSuccess(c, nil)
+}

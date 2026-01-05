@@ -70,3 +70,17 @@ type LLMSetting struct {
 type UpdateLLMSettingReq struct {
 	*LLMConfig
 }
+
+type AgentConfig struct {
+	Name   string   `json:"name"`
+	Prompt string   `json:"prompt"`
+	Tools  []string `json:"tools"`
+}
+
+type AgentSetting struct {
+	*AgentConfig
+}
+
+type UpdateAgentSettingReq struct {
+	*AgentConfig
+}

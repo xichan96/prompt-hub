@@ -41,7 +41,7 @@ export default function Header(props: HeaderProps) {
   const userMenuItems = [
     {
       key: 'namespaces',
-      label: '命名空间',
+      label: '提示词',
       icon: <FolderOutlined />,
       onClick: () => handleNavigate('/namespaces'),
       disabled: isActivePath('/namespaces'),
@@ -72,6 +72,7 @@ export default function Header(props: HeaderProps) {
     label: '退出登陆',
     icon: <LogoutOutlined />,
     onClick: handleLogout,
+    disabled: false,
   });
 
   return (

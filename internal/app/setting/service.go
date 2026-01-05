@@ -22,6 +22,9 @@ type AppIer interface {
 	// llm 设置，如果不存在要插入到 setting 表中
 	GetLLMSetting(ctx context.Context) (*appdto.LLMSetting, error)
 	UpdateLLMSetting(ctx context.Context, req *appdto.UpdateLLMSettingReq) error
+	// agent 设置，如果不存在要插入到 setting 表中
+	GetAgentSetting(ctx context.Context) (*appdto.AgentSetting, error)
+	UpdateAgentSetting(ctx context.Context, req *appdto.UpdateAgentSettingReq) error
 }
 
 type app struct {
@@ -119,6 +122,48 @@ func (a *app) UpdateLLMSetting(ctx context.Context, req *appdto.UpdateLLMSetting
 		if errors.Is(err, gorm.ErrRecordNotFound) || ec.IsErrCode(err, ec.NoFound) {
 			setting = &model.Setting{
 				Group: "llm",
+				Key:   "config",
+				Value: string(valueBytes),
+			}
+			_, err = a.sp.Create(ctx, setting)
+			return err
+		}
+		return err
+	}
+	setting.Value = string(valueBytes)
+	return a.sp.Update(ctx, setting, options...)
+}
+
+func (a *app) GetAgentSetting(ctx context.Context) (*appdto.AgentSetting, error) {
+	options := make([]func(*gorm.DB) *gorm.DB, 0)
+	options = append(options, a.sp.Where(a.sp.F().Group.Eq("agent"), a.sp.F().Key.Eq("config")))
+	setting, err := a.sp.GetBy(ctx, options...)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || ec.IsErrCode(err, ec.NoFound) {
+			agentConfig := &appdto.AgentConfig{}
+			return &appdto.AgentSetting{AgentConfig: agentConfig}, nil
+		}
+		return nil, err
+	}
+	agentConfig := &appdto.AgentConfig{}
+	if err := json.Unmarshal([]byte(setting.Value), agentConfig); err != nil {
+		return nil, err
+	}
+	return &appdto.AgentSetting{AgentConfig: agentConfig}, nil
+}
+
+func (a *app) UpdateAgentSetting(ctx context.Context, req *appdto.UpdateAgentSettingReq) error {
+	valueBytes, err := json.Marshal(req.AgentConfig)
+	if err != nil {
+		return err
+	}
+	options := make([]func(*gorm.DB) *gorm.DB, 0)
+	options = append(options, a.sp.Where(a.sp.F().Group.Eq("agent"), a.sp.F().Key.Eq("config")))
+	setting, err := a.sp.GetBy(ctx, options...)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || ec.IsErrCode(err, ec.NoFound) {
+			setting = &model.Setting{
+				Group: "agent",
 				Key:   "config",
 				Value: string(valueBytes),
 			}

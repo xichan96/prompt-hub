@@ -107,3 +107,25 @@ export const getLLMSetting = () => request.get<LLMSetting>('/settings/llm');
 
 export const updateLLMSetting = (data: UpdateLLMSettingRequest) => request.put('/settings/llm', data);
 
+export interface AgentConfig {
+  name: string;
+  prompt: string;
+  tools: string[];
+}
+
+export interface AgentSetting {
+  name: string;
+  prompt: string;
+  tools: string[];
+}
+
+export interface UpdateAgentSettingRequest {
+  name: string;
+  prompt: string;
+  tools: string[];
+}
+
+export const getAgentSetting = () => request.get<AgentSetting>('/settings/agent');
+
+export const updateAgentSetting = (data: UpdateAgentSettingRequest) => request.put('/settings/agent', data);
+

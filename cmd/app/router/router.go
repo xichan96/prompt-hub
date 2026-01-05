@@ -46,6 +46,8 @@ func RegisterAPIRouter(r *gin.Engine) {
 			settings.DELETE("", handler.DeleteSettingAPI)
 			settings.GET("/llm", handler.GetLLMSettingAPI)
 			settings.PUT("/llm", handler.UpdateLLMSettingAPI)
+			settings.GET("/agent", handler.GetAgentSettingAPI)
+			settings.PUT("/agent", handler.UpdateAgentSettingAPI)
 		}
 
 		agent := api.Group("/agent", middleware.Auth())

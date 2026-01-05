@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/xichan96/cortex/agent/engine"
@@ -34,7 +35,7 @@ func (a *app) build(sessionID string) (*engine.AgentEngine, error) {
 
 	memoryProvider := a.setupMemory(sessionID)
 
-	agentConfig := types.NewAgentConfig()
+	agentConfig := a.setupAgentConfig()
 
 	engine := engine.NewAgentEngine(llmProvider, agentConfig)
 	engine.SetMemory(memoryProvider)
@@ -42,4 +43,20 @@ func (a *app) build(sessionID string) (*engine.AgentEngine, error) {
 }
 func (a *app) Engine(sessionID string) (*engine.AgentEngine, error) {
 	return a.build(sessionID)
+}
+
+func (a *app) setupAgentConfig() *types.AgentConfig {
+	agentConfig := types.NewAgentConfig()
+
+	agentSetting, err := a.settingSrv.GetAgentSetting(context.Background())
+	if err != nil || agentSetting == nil || agentSetting.AgentConfig == nil {
+		return agentConfig
+	}
+
+	cfg := agentSetting.AgentConfig
+	if cfg.Prompt != "" {
+		agentConfig.SystemMessage = cfg.Prompt
+	}
+
+	return agentConfig
 }

@@ -79,12 +79,17 @@ func UpdatePromptAPI(c *gin.Context) {
 // @Tags                  提示词管理
 // @Accept                json
 // @Produce               json
-// @Param                 namespace_id    path        string          true    "命名空间ID"
-// @Param                 prompt_id       path        string          true    "提示词ID"
+// @Param                 namespace_id    path        string                  true    "命名空间ID"
+// @Param                 prompt_id       path        string                  true    "提示词ID"
+// @Param                 body            body        appdto.PublishPromptReq  true    "发布信息"
 // @Success               200             {object}    appdto.EmptyResponse "发布成功"
 // @Router                /api/namespaces/:namespace_id/prompts/:prompt_id/publish [post]
 func PublishPromptAPI(c *gin.Context) {
 	var req appdto.PublishPromptReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		gx.JSONErr(c, gx.BErr(err))
+		return
+	}
 	var uriReq struct {
 		PromptID string `uri:"prompt_id" binding:"required"`
 	}

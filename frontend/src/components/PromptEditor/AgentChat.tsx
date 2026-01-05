@@ -45,7 +45,6 @@ export default function AgentChat() {
                 onClick={handleClearContext}
                 className={styles.clearButton}
               >
-                清理
               </Button>
             )}
             <Button
