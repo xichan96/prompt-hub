@@ -20,10 +20,11 @@ const AUTO_APPLY_KEY = 'agent_auto_apply';
 
 export interface UseAgentChatOptions {
   onAgentMessageComplete?: (content: string, userMessage: string) => void;
+  id?: string;
 }
 
 export function useAgentChat(options?: UseAgentChatOptions) {
-  const { onAgentMessageComplete } = options || {};
+  const { onAgentMessageComplete, id } = options || {};
   const [agentMessage, setAgentMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [sending, setSending] = useState(false);
@@ -32,9 +33,13 @@ export function useAgentChat(options?: UseAgentChatOptions) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionIdRef = useRef<string>('');
 
+  const getStorageKey = useCallback(() => {
+    return id ? `${STORAGE_KEY}_${id}` : STORAGE_KEY;
+  }, [id]);
+
   const loadCache = useCallback((): ChatCache | null => {
     try {
-      const cached = localStorage.getItem(STORAGE_KEY);
+      const cached = localStorage.getItem(getStorageKey());
       if (cached) {
         return JSON.parse(cached);
       }
@@ -42,23 +47,23 @@ export function useAgentChat(options?: UseAgentChatOptions) {
       console.error('Failed to load chat cache:', error);
     }
     return null;
-  }, []);
+  }, [getStorageKey]);
 
   const saveCache = useCallback((data: ChatCache) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(getStorageKey(), JSON.stringify(data));
     } catch (error) {
       console.error('Failed to save chat cache:', error);
     }
-  }, []);
+  }, [getStorageKey]);
 
   const clearCache = useCallback(() => {
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(getStorageKey());
     } catch (error) {
       console.error('Failed to clear chat cache:', error);
     }
-  }, []);
+  }, [getStorageKey]);
 
   useEffect(() => {
     const cached = loadCache();
@@ -70,6 +75,10 @@ export function useAgentChat(options?: UseAgentChatOptions) {
         id: msg.id || `${msg.role}-${Date.now()}-${Math.random()}`,
       }));
       setMessages(messagesWithId);
+    } else {
+      setSessionId('');
+      sessionIdRef.current = '';
+      setMessages([]);
     }
   }, [loadCache]);
 

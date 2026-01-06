@@ -26,13 +26,10 @@ export default function NamespaceDetail() {
   const namespace = namespaceId ? namespaces.find(n => n.id === namespaceId) || null : null;
 
   const handleEdit = async (record: Prompt) => {
-    const data = await loadPrompt(record.id);
-    if (data) {
-      setEditorPrompt(data);
-      setEditorContent(data.content || '');
-      setEditingPrompt(data);
-      setModalVisible(true);
-    }
+    setEditorPrompt(record);
+    setEditorContent(record.content || '');
+    setEditingPrompt(record);
+    setModalVisible(true);
   };
 
   const handleSubmit = async () => {
@@ -276,4 +273,3 @@ export default function NamespaceDetail() {
     </Page>
   );
 }
-

@@ -110,4 +110,3 @@ export function usePromptList(namespaceId: string, filterName?: string) {
     loadPrompt,
   };
 }
-

@@ -20,18 +20,14 @@ import (
 // @Router                /api/namespaces/:namespace_id/prompts [post]
 func CreatePromptAPI(c *gin.Context) {
 	var req appdto.CreatePromptDraftReq
+	if err := c.ShouldBindUri(&req); err != nil {
+		gx.JSONErr(c, gx.BErr(err))
+		return
+	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		gx.JSONErr(c, gx.BErr(err))
 		return
 	}
-	var uriReq struct {
-		NamespaceID string `uri:"namespace_id" binding:"required"`
-	}
-	if err := c.ShouldBindUri(&uriReq); err != nil {
-		gx.JSONErr(c, gx.BErr(err))
-		return
-	}
-	req.NamespaceID = uriReq.NamespaceID
 	id, err := di.PromptApp.CreatePrompt(c, &req)
 	if err != nil {
 		gx.JSONErr(c, err)
@@ -53,18 +49,14 @@ func CreatePromptAPI(c *gin.Context) {
 // @Router                /api/namespaces/:namespace_id/prompts/:prompt_id [put]
 func UpdatePromptAPI(c *gin.Context) {
 	var req appdto.UpdatePromptDraftReq
+	if err := c.ShouldBindUri(&req); err != nil {
+		gx.JSONErr(c, gx.BErr(err))
+		return
+	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		gx.JSONErr(c, gx.BErr(err))
 		return
 	}
-	var uriReq struct {
-		PromptID string `uri:"prompt_id" binding:"required"`
-	}
-	if err := c.ShouldBindUri(&uriReq); err != nil {
-		gx.JSONErr(c, gx.BErr(err))
-		return
-	}
-	req.ID = uriReq.PromptID
 	err := di.PromptApp.UpdatePrompt(c, &req)
 	if err != nil {
 		gx.JSONErr(c, err)
@@ -86,18 +78,14 @@ func UpdatePromptAPI(c *gin.Context) {
 // @Router                /api/namespaces/:namespace_id/prompts/:prompt_id/publish [post]
 func PublishPromptAPI(c *gin.Context) {
 	var req appdto.PublishPromptReq
+	if err := c.ShouldBindUri(&req); err != nil {
+		gx.JSONErr(c, gx.BErr(err))
+		return
+	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		gx.JSONErr(c, gx.BErr(err))
 		return
 	}
-	var uriReq struct {
-		PromptID string `uri:"prompt_id" binding:"required"`
-	}
-	if err := c.ShouldBindUri(&uriReq); err != nil {
-		gx.JSONErr(c, gx.BErr(err))
-		return
-	}
-	req.ID = uriReq.PromptID
 	err := di.PromptApp.PublishPrompt(c, &req)
 	if err != nil {
 		gx.JSONErr(c, err)
@@ -117,17 +105,10 @@ func PublishPromptAPI(c *gin.Context) {
 // @Success               200             {object}    appdto.EmptyResponse         "删除成功"
 // @Router                /api/namespaces/:namespace_id/prompts/:prompt_id [delete]
 func DeletePromptAPI(c *gin.Context) {
-	var uriReq struct {
-		NamespaceID string `uri:"namespace_id" binding:"required"`
-		PromptID    string `uri:"prompt_id" binding:"required"`
-	}
-	if err := c.ShouldBindUri(&uriReq); err != nil {
+	var req appdto.DeletePromptReq
+	if err := c.ShouldBindUri(&req); err != nil {
 		gx.JSONErr(c, gx.BErr(err))
 		return
-	}
-	req := appdto.DeletePromptReq{
-		ID:          uriReq.PromptID,
-		NamespaceID: uriReq.NamespaceID,
 	}
 	err := di.PromptApp.DeletePrompt(c, &req)
 	if err != nil {
@@ -148,17 +129,10 @@ func DeletePromptAPI(c *gin.Context) {
 // @Success               200             {object}    appdto.PromptResponse  "获取成功"
 // @Router                /api/namespaces/:namespace_id/prompts/:prompt_id [get]
 func GetPromptAPI(c *gin.Context) {
-	var uriReq struct {
-		NamespaceID string `uri:"namespace_id" binding:"required"`
-		PromptID    string `uri:"prompt_id" binding:"required"`
-	}
-	if err := c.ShouldBindUri(&uriReq); err != nil {
+	var req appdto.GetPromptReq
+	if err := c.ShouldBindUri(&req); err != nil {
 		gx.JSONErr(c, gx.BErr(err))
 		return
-	}
-	req := appdto.GetPromptReq{
-		ID:          uriReq.PromptID,
-		NamespaceID: uriReq.NamespaceID,
 	}
 	prompt, err := di.PromptApp.GetPrompt(c, &req)
 	if err != nil {
@@ -180,22 +154,16 @@ func GetPromptAPI(c *gin.Context) {
 // @Success                     200             {object}    appdto.PromptListResponse  "获取成功"
 // @Router                      /api/namespaces/:namespace_id/prompts [get]
 func GetPromptListAPI(c *gin.Context) {
-	var uriReq struct {
-		NamespaceID string `uri:"namespace_id" binding:"required"`
-	}
-	if err := c.ShouldBindUri(&uriReq); err != nil {
+	var req appdto.GetPromptReq
+	if err := c.ShouldBindUri(&req); err != nil {
 		gx.JSONErr(c, gx.BErr(err))
 		return
 	}
-	var queryReq struct {
-		Name   string `form:"name"`
-		Status string `form:"status"`
-	}
-	if err := c.ShouldBindQuery(&queryReq); err != nil {
+	if err := c.ShouldBindQuery(&req); err != nil {
 		gx.JSONErr(c, gx.BErr(err))
 		return
 	}
-	prompts, err := di.PromptApp.GetPromptList(c, uriReq.NamespaceID, queryReq.Name, queryReq.Status)
+	prompts, err := di.PromptApp.GetPromptList(c, req.NamespaceID, req.Name, req.Status)
 	if err != nil {
 		gx.JSONErr(c, err)
 		return

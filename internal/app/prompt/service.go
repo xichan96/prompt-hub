@@ -3,6 +3,7 @@ package prompt
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/xichan96/prompt-hub/internal/appdto"
@@ -161,7 +162,15 @@ func (a *app) GetPromptList(ctx context.Context, namespaceID, name, status strin
 		options = append(options, a.pp.Where(a.pp.F().Name.Like("%"+name+"%")))
 	}
 	if len(status) > 0 {
-		options = append(options, a.pp.Where(a.pp.F().Status.Eq(status)))
+		statuses := make([]string, 0)
+		for _, s := range strings.Split(status, ",") {
+			if trimmed := strings.TrimSpace(s); trimmed != "" {
+				statuses = append(statuses, trimmed)
+			}
+		}
+		if len(statuses) > 0 {
+			options = append(options, a.pp.Where(a.pp.F().Status.In(statuses...)))
+		}
 	}
 	options = append(options, func(db *gorm.DB) *gorm.DB {
 		return db.Order("updated_at DESC")

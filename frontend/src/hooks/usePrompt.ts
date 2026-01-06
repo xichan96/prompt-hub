@@ -6,7 +6,7 @@ export function usePromptOperations(namespaceId: string, promptId?: string) {
   const [publishing, setPublishing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const handleSave = useCallback(async (content: string) => {
+  const handleSave = useCallback(async (content: string, showSuccessMessage = true) => {
     if (!namespaceId || !promptId) return;
     try {
       setSaving(true);
@@ -14,7 +14,9 @@ export function usePromptOperations(namespaceId: string, promptId?: string) {
         id: promptId,
         content: content
       });
-      message.success('保存成功');
+      if (showSuccessMessage) {
+        message.success('保存成功');
+      }
       return true;
     } catch (error) {
       return false;
@@ -50,40 +52,40 @@ export function usePromptVersions(namespaceId: string, promptName?: string) {
   const [hasPublished, setHasPublished] = useState(false);
   const [loadingDiff, setLoadingDiff] = useState(false);
   const [draftContent, setDraftContent] = useState<string>('');
+  const lastFetchKeyRef = useState<{ key: string }>(() => ({ key: '' }))[0];
 
-  const loadPublishedContent = useCallback(async () => {
+  const loadPublishedContent = useCallback(async (opts?: { force?: boolean }) => {
     if (!namespaceId || !promptName) return;
     try {
+      const fetchKey = `${namespaceId}|${promptName}`;
+      if (!opts?.force && lastFetchKeyRef.key === fetchKey) {
+        return;
+      }
+      lastFetchKeyRef.key = fetchKey;
       setLoadingDiff(true);
-      const prompts = await getPromptList(namespaceId, { name: promptName });
-      const draftPrompts = prompts.filter(p => p.status === 'draft').sort((a, b) => 
-        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      );
-      const publishedPrompts = prompts.filter(p => p.status === 'published').sort((a, b) => 
-        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      );
-      
-      if (publishedPrompts.length > 0) {
-        const latestPublished = publishedPrompts[0];
-        const publishedPrompt = await getPrompt(namespaceId, latestPublished.id);
-        setPublishedContent(publishedPrompt.content);
+      const prompts = await getPromptList(namespaceId, { name: promptName, status: 'published,draft' });
+      const publishedList = prompts.filter(p => p.status === 'published');
+      const draftList = prompts.filter(p => p.status === 'draft');
+      const latestPublished = publishedList
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+      const latestDraft = draftList
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+      if (latestPublished) {
+        setPublishedContent(latestPublished.content || '');
         setHasPublished(true);
       } else {
         setPublishedContent('');
         setHasPublished(false);
       }
-
-      if (draftPrompts.length > 0) {
-        const currentDraft = draftPrompts[0];
-        const draftPrompt = await getPrompt(namespaceId, currentDraft.id);
-        setDraftContent(draftPrompt.content);
+      if (latestDraft) {
+        setDraftContent(latestDraft.content || '');
       }
     } catch (error) {
       setHasPublished(false);
     } finally {
       setLoadingDiff(false);
     }
-  }, [namespaceId, promptName]);
+  }, [namespaceId, promptName, lastFetchKeyRef]);
 
   return {
     publishedContent,
@@ -131,4 +133,3 @@ export function usePromptContent(namespaceId: string) {
     clearVersionContent,
   };
 }
-

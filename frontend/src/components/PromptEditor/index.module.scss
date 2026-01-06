@@ -44,6 +44,7 @@
 .headerActions {
   display: flex;
   align-items: center;
+  margin-left: auto;
 }
 
 .versionIcon {
@@ -75,26 +76,66 @@
 .versionList {
   display: flex;
   flex-direction: column;
+  position: relative;
+  --timeline-x: 31px;
+  --timeline-dot-offset: 7px;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: var(--timeline-x);
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #2a2a2a;
+  }
 }
 
 .versionItem {
-  padding: 12px 24px;
+  padding: 12px 24px 12px 48px;
   cursor: pointer;
   color: rgba(255, 255, 255, 0.65);
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--timeline-x) - var(--timeline-dot-offset));
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #3a3a3a;
+    border: 2px solid #5a5a5a;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+  }
   
   &:hover {
     background-color: #2a2a2a;
     color: rgba(255, 255, 255, 0.85);
+    
+    &::before {
+      background-color: #1890ff;
+      border-color: #1890ff;
+      box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.25);
+    }
   }
 
   &.active {
     background-color: #2a2a2a;
     color: rgba(255, 255, 255, 0.85);
     border-left: 2px solid #1890ff;
+    
+     &::before {
+      background-color: #1890ff;
+      border-color: #1890ff;
+      box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.35);
+    }
   }
 }
 
@@ -260,6 +301,16 @@
 .agentTitle {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.85);
+}
+
+.autoApplyButton {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+  
+  &:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background-color: transparent;
+  }
 }
 
 .clearButton {
@@ -480,7 +531,7 @@
 }
 
 .inputArea {
-  padding: 16px 20px;
+  padding: 16px 8px 16px 20px;
   border-top: 1px solid #434343;
   display: flex;
   flex-shrink: 0;
@@ -525,11 +576,12 @@
 
 .messageInput {
   flex: 1;
+  width: 100%;
   background-color: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.85);
   resize: none;
-  padding: 8px 12px;
+  padding: 10px 12px;
   transition: all 0.2s;
   
   &:focus {
@@ -545,12 +597,33 @@
   :global(.ant-input) {
     background-color: transparent;
     border: none;
+    width: 100%;
+    box-sizing: border-box;
     
     &:focus {
       border: none;
       box-shadow: none;
     }
   }
+}
+
+.inputToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-top: 1px solid #3a3a3a;
+  background-color: #2a2a2a;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.toolbarSendButton {
+  height: 24px;
+  padding: 0;
+  border-radius: 2px;
+  font-size: 12px;
+  width: 24px;
 }
 
 .sendButton {
@@ -708,4 +781,3 @@
   gap: 6px;
   line-height: 1.6;
 }
-

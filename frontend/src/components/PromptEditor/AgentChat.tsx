@@ -1,32 +1,66 @@
-import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
-import { Button, Input, Avatar } from 'antd';
-import { SendOutlined, ClearOutlined, RightOutlined } from '@ant-design/icons';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
-import rehypeRaw from 'rehype-raw';
-import { useAgentChat, Message } from '@/hooks/useAgentChat';
-import CodeReference from './CodeReference';
-import { CodeReferenceInfo } from './EditorArea';
-import styles from './index.module.scss';
-import 'highlight.js/styles/github-dark.css';
+import { useState, useRef, useEffect, useImperativeHandle, forwardRef, Children, useCallback } from 'react';
+ import { Button, Input, Avatar } from 'antd';
+import { ClearOutlined, CheckOutlined } from '@ant-design/icons';
+ import ReactMarkdown from 'react-markdown';
+ import remarkGfm from 'remark-gfm';
+ import rehypeHighlight from 'rehype-highlight';
+ import rehypeRaw from 'rehype-raw';
+ import { useAgentChat } from '@/hooks/useAgentChat';
+import { useAgentMessageHandler } from '@/hooks/useAgentMessageHandler';
+import { useAutoApply } from '@/hooks/useAutoApply';
+ import CodeReference from './CodeReference';
+ import { CodeReferenceInfo } from './EditorArea';
+ import InputToolbar from './InputToolbar';
+ import styles from './index.module.scss';
+ import 'highlight.js/styles/github-dark.css';
 
 interface AgentChatProps {
-  editorAreaRef?: React.RefObject<{ navigateToLine: (lineRange: string) => void }>;
+  editorAreaRef?: React.RefObject<{ 
+    navigateToLine: (lineRange: string) => void;
+    replaceCode: (content: string, lineRange?: string) => void;
+  }>;
+  collapsed?: boolean;
+  onToggleCollapsed?: (collapsed: boolean) => void;
+  chatId?: string;
 }
 
 export interface AgentChatRef {
   setInputMessage: (content: string | CodeReferenceInfo) => void;
 }
 
-const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef }, ref) => {
-  const [collapsed, setCollapsed] = useState(false);
+const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, collapsed, onToggleCollapsed, chatId }, ref) => {
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [codeReferences, setCodeReferences] = useState<CodeReferenceInfo[]>([]);
   const [plainText, setPlainText] = useState<string>('');
   const [width, setWidth] = useState(400);
   const [isResizing, setIsResizing] = useState(false);
   const inputRef = useRef<any>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const isCollapsed = typeof collapsed === 'boolean' ? collapsed : internalCollapsed;
+  const setCollapsedValue = (next: boolean) => {
+    if (typeof collapsed === 'boolean' && onToggleCollapsed) {
+      onToggleCollapsed(next);
+      return;
+    }
+    setInternalCollapsed(next);
+  };
+
+  const { autoApply, toggleAutoApply } = useAutoApply();
+
+  // Ref to hold the latest line range function to resolve circular dependency
+  const getLatestLineRangeRef = useRef<() => string | undefined>();
+
+  const handleApplyToEditor = useCallback((content: string, lineRange?: string) => {
+    if (editorAreaRef?.current) {
+      editorAreaRef.current.replaceCode(content, lineRange);
+    }
+  }, [editorAreaRef]);
+
+  const { handleAgentMessageComplete } = useAgentMessageHandler({
+    onApplyToEditor: handleApplyToEditor,
+    autoApplyEnabled: autoApply,
+    getLineRange: () => getLatestLineRangeRef.current?.(),
+  });
   
   const {
     agentMessage,
@@ -37,7 +71,57 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef }, r
     handleSendMessage: originalHandleSendMessage,
     sendMessageDirectly,
     handleClearContext,
-  } = useAgentChat();
+  } = useAgentChat({
+    onAgentMessageComplete: handleAgentMessageComplete,
+  });
+
+  const getCodeReference = useCallback((msgIndex: number) => {
+    // Find the closest previous user message with a code reference (Sticky Context)
+    for (let i = msgIndex - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (msg.role === 'user') {
+        const codeRefMatches = msg.content.match(/```code-ref\n([\s\S]*?)\n```/);
+        if (codeRefMatches && codeRefMatches[1]) {
+          try {
+            // Remove the markdown code block wrapper to get clean JSON
+            const jsonStr = codeRefMatches[1];
+            return JSON.parse(jsonStr) as CodeReferenceInfo;
+          } catch (e) {
+            console.error('Failed to parse code reference:', e);
+            continue;
+          }
+        }
+        // If we found a user message but it has no code ref, continue searching backwards
+        continue;
+      }
+    }
+    return null;
+  }, [messages]);
+
+  const getLatestLineRange = useCallback(() => {
+    // When auto-applying, we are at the end of the conversation
+    const ref = getCodeReference(messages.length);
+    return ref?.lineRange;
+  }, [getCodeReference, messages]);
+
+  // Update the ref whenever getLatestLineRange changes
+  useEffect(() => {
+    getLatestLineRangeRef.current = getLatestLineRange;
+  }, [getLatestLineRange]);
+
+  const getTextFromChildren = (nodeChildren: any): string => {
+    return Children.toArray(nodeChildren)
+      .map((child: any) => {
+        if (typeof child === 'string') return child;
+        if (child && child.props && child.props.children) {
+          return getTextFromChildren(child.props.children);
+        }
+        return '';
+      })
+      .join('');
+  };
+
+
 
   const handleSendMessage = () => {
     if (codeReferences.length > 0) {
@@ -68,10 +152,9 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef }, r
         setPlainText('');
         setAgentMessage('');
       }
-      setCollapsed(false);
+      setCollapsedValue(false);
       
-      // 使用 ref 来存储 timeout，以便在组件卸载时清理
-      const timeoutId = setTimeout(() => {
+      setTimeout(() => {
         if (inputRef.current) {
           const textarea = (inputRef.current as any)?.resizableTextArea?.textArea;
           if (textarea) {
@@ -86,7 +169,7 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef }, r
     },
   }), [setAgentMessage]);
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       handleSendMessage();
@@ -136,10 +219,10 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef }, r
     <>
       <div 
         ref={sidebarRef}
-        className={`${styles.agentSidebar} ${collapsed ? styles.collapsed : ''} ${isResizing ? styles.resizing : ''}`}
-        style={!collapsed ? { width: `${width}px` } : undefined}
+        className={`${styles.agentSidebar} ${isCollapsed ? styles.collapsed : ''} ${isResizing ? styles.resizing : ''}`}
+        style={!isCollapsed ? { width: `${width}px` } : undefined}
       >
-        {!collapsed && (
+        {!isCollapsed && (
           <div 
             className={styles.resizeHandle}
             onMouseDown={handleMouseDown}
@@ -161,20 +244,13 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef }, r
               >
               </Button>
             )}
-            <Button
-              type="text"
-              size="small"
-              icon={<RightOutlined />}
-              onClick={() => setCollapsed(true)}
-              className={styles.clearButton}
-            />
           </div>
         </div>
         <div className={styles.messages}>
           {messages.length === 0 ? (
             <div className={styles.emptyMessage}>暂无对话</div>
           ) : (
-            messages.map((msg) => (
+            messages.map((msg, index) => (
               <div key={msg.id} className={msg.role === 'user' ? styles.userMessage : styles.agentMessage}>
                 {msg.role === 'agent' ? (
                   <ReactMarkdown
@@ -182,17 +258,42 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef }, r
                     rehypePlugins={[rehypeHighlight, rehypeRaw]}
                     components={{
                       code: ({ node, inline, className, children, ...props }: any) => {
-                        const match = /language-(\w+)/.exec(className || '');
-                        return !inline && match ? (
-                          <pre className={className}>
+                        const isInline = inline;
+                        if (isInline) {
+                          return (
                             <code className={className} {...props}>
                               {children}
                             </code>
-                          </pre>
-                        ) : (
-                          <code className={className} {...props}>
-                            {children}
-                          </code>
+                          );
+                        }
+
+                        const content = getTextFromChildren(children).replace(/\n$/, '');
+                        
+                        return (
+                          <div style={{ position: 'relative' }}>
+                            {editorAreaRef?.current?.replaceCode && (
+                              <div style={{ position: 'absolute', top: 4, right: 4, zIndex: 10 }}>
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  icon={<CheckOutlined />}
+                                  style={{ color: 'white', background: 'rgba(0,0,0,0.3)' }}
+                                  onClick={() => {
+                                    const ref = getCodeReference(index);
+                                    editorAreaRef.current?.replaceCode(content, ref?.lineRange);
+                                  }}
+                                  title="应用代码"
+                                >
+                                  应用
+                                </Button>
+                              </div>
+                            )}
+                            <pre className={className}>
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            </pre>
+                          </div>
                         );
                       },
                     }}
@@ -298,27 +399,20 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef }, r
                 placeholder="输入消息..."
                 className={styles.messageInput}
                 autoSize={{ minRows: 1, maxRows: 4 }}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
+              />
+              <InputToolbar
+                onSend={handleSendMessage}
+                sending={sending}
+                disabled={sending || (codeReferences.length === 0 && !agentMessage.trim())}
+                autoApply={autoApply}
+                onToggleAutoApply={toggleAutoApply}
               />
             </div>
-            <Button
-              type="primary"
-              icon={<SendOutlined />}
-              onClick={handleSendMessage}
-              className={styles.sendButton}
-              loading={sending}
-              disabled={sending || (codeReferences.length === 0 && !agentMessage.trim()) || (codeReferences.length > 0 && !plainText.trim())}
-            >
-              发送
-            </Button>
           </div>
         </div>
       </div>
-      {collapsed && (
-        <div className={styles.floatingAvatar} onClick={() => setCollapsed(false)}>
-          <Avatar size={48} style={{ backgroundColor: '#1890ff', cursor: 'pointer' }}>A</Avatar>
-        </div>
-      )}
+      
     </>
   );
 });
@@ -326,4 +420,3 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef }, r
 AgentChat.displayName = 'AgentChat';
 
 export default AgentChat;
-

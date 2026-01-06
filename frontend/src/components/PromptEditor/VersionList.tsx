@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import styles from './index.module.scss';
 import { VersionType, VersionItem } from './types';
 import { getPromptList, Prompt } from '@/apis/prompt';
@@ -24,17 +24,24 @@ export default function VersionList({
 }: VersionListProps) {
   const [versions, setVersions] = useState<VersionItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const lastFetchKeyRef = useRef<string>('');
 
   useEffect(() => {
     if (!namespaceId || !promptName) {
       setVersions([]);
       return;
     }
+    
+    const fetchKey = `${namespaceId}|${promptName}|${refreshTrigger ?? 0}`;
+    if (lastFetchKeyRef.current === fetchKey) {
+      return;
+    }
+    lastFetchKeyRef.current = fetchKey;
 
     const fetchVersions = async () => {
       try {
         setLoading(true);
-        const prompts = await getPromptList(namespaceId, { name: promptName });
+        const prompts = await getPromptList(namespaceId, { name: promptName, status: 'archived' });
         
         const versionItems: VersionItem[] = [];
         
@@ -63,6 +70,9 @@ export default function VersionList({
   }, [namespaceId, promptName, refreshTrigger]);
 
   const handleVersionClick = (version: VersionItem) => {
+    if (version.type === 'history' && selectedVersion === 'history' && version.id === selectedHistoryId) {
+      return;
+    }
     if (version.type === 'diff') {
       onVersionChange('diff', version.id);
     } else if (version.type === 'edit') {
@@ -140,4 +150,3 @@ export default function VersionList({
     </div>
   );
 }
-

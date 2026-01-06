@@ -42,19 +42,15 @@ func CreateNamespaceAPI(c *gin.Context) {
 // @Success               200     {object}    appdto.EmptyResponse         "更新成功"
 // @Router                /api/namespaces/:namespace_id [put]
 func UpdateNamespaceAPI(c *gin.Context) {
-	var uriReq struct {
-		ID string `uri:"namespace_id" binding:"required"`
-	}
-	if err := c.ShouldBindUri(&uriReq); err != nil {
+	var req appdto.UpdateNamespaceReq
+	if err := c.ShouldBindUri(&req); err != nil {
 		gx.JSONErr(c, gx.BErr(err))
 		return
 	}
-	var req appdto.UpdateNamespaceReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		gx.JSONErr(c, gx.BErr(err))
 		return
 	}
-	req.ID = uriReq.ID
 	err := di.NamespaceApp.UpdateNamespace(c, &req)
 	if err != nil {
 		gx.JSONErr(c, err)
@@ -73,9 +69,7 @@ func UpdateNamespaceAPI(c *gin.Context) {
 // @Success               200     {object}    appdto.EmptyResponse "删除成功"
 // @Router                /api/namespaces/:namespace_id [delete]
 func DeleteNamespaceAPI(c *gin.Context) {
-	var req struct {
-		ID string `uri:"namespace_id" binding:"required"`
-	}
+	var req appdto.UpdateNamespaceReq
 	if err := c.ShouldBindUri(&req); err != nil {
 		gx.JSONErr(c, gx.BErr(err))
 		return

@@ -58,13 +58,10 @@ export default function Namespaces() {
   };
 
   const handleEditPrompt = async (record: Prompt) => {
-    const data = await loadPrompt(record.id);
-    if (data) {
-      setEditorPrompt(data);
-      setEditorContent(data.content || '');
-      setEditingPrompt(data);
-      setPromptModalVisible(true);
-    }
+    setEditorPrompt(record);
+    setEditorContent(record.content || '');
+    setEditingPrompt(record);
+    setPromptModalVisible(true);
   };
 
   const handleSubmitPrompt = async () => {
@@ -349,4 +346,3 @@ export default function Namespaces() {
     </Page>
   );
 }
-

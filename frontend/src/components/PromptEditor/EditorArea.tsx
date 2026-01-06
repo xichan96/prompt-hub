@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { Button } from 'antd';
-import { MessageOutlined, ConsoleSqlOutlined } from '@ant-design/icons';
+import { ConsoleSqlOutlined } from '@ant-design/icons';
 import Editor, { DiffEditor, OnMount, DiffOnMount } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import styles from './index.module.scss';
@@ -20,6 +20,7 @@ export interface CodeReferenceInfo {
 
 export interface EditorAreaRef {
   navigateToLine: (lineRange: string) => void;
+  replaceCode: (content: string, lineRange?: string) => void;
 }
 
 interface EditorAreaProps {
@@ -214,10 +215,65 @@ const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({
       navigateTimeoutsRef.current.highlight = undefined;
     }, 2000);
   }, [getActiveEditor]);
+const replaceCode = useCallback((content: string, lineRange?: string) => {
+    const editor = getActiveEditor();
+    if (!editor) return;
+
+    const model = editor.getModel();
+    if (!model) return;
+
+    editor.updateOptions({ readOnly: false });
+
+    let range: monaco.Range | null = null;
+
+    if (lineRange) {
+      const match = lineRange.match(/(\d+)(?:-(\d+))?/);
+      if (match) {
+        const parsedStart = parseInt(match[1], 10);
+        const parsedEnd = match[2] ? parseInt(match[2], 10) : parsedStart;
+        
+        const lineCount = model.getLineCount();
+        const startLine = Math.max(1, Math.min(parsedStart, lineCount));
+        const endLine = Math.max(startLine, Math.min(parsedEnd, lineCount));
+        
+        range = new monaco.Range(
+          startLine, 
+          1, 
+          endLine, 
+          model.getLineLength(endLine) + 1
+        );
+      }
+    }
+
+    if (!range) {
+      const selection = editor.getSelection();
+      if (selection && !selection.isEmpty()) {
+        range = selection;
+      } else {
+        const lineCount = model.getLineCount();
+        range = new monaco.Range(
+          1, 
+          1, 
+          lineCount, 
+          model.getLineLength(lineCount) + 1
+        );
+      }
+    }
+
+    if (range) {
+      editor.executeEdits('agent-apply', [{
+        range: range,
+        text: content,
+        forceMoveMarkers: true
+      }]);
+      editor.focus();
+    }
+  }, [getActiveEditor]);
 
   useImperativeHandle(ref, () => ({
     navigateToLine,
-  }), [navigateToLine]);
+    replaceCode,
+  }), [navigateToLine, replaceCode]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -378,4 +434,3 @@ const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({
 EditorArea.displayName = 'EditorArea';
 
 export default EditorArea;
-
