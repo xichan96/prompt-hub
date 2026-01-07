@@ -1,6 +1,7 @@
 import PromptEditorComponent from '@/components/PromptEditor';
 import styles from './PromptEditor.module.scss';
 import { usePromptEditorController } from './usePromptEditorController';
+import { useI18n } from '@/hooks/useI18n';
 
 export default function PromptEditor() {
   const {
@@ -11,9 +12,10 @@ export default function PromptEditor() {
     setContent,
     loading,
   } = usePromptEditorController();
+  const { t } = useI18n();
 
   if (loading && !prompt) {
-    return <div className={styles.loading}>加载中...</div>;
+    return <div className={styles.loading}>{t('common.loading', '加载中...')}</div>;
   }
 
   if (!prompt) {

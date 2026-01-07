@@ -1,10 +1,11 @@
 import { useNavigate, useLocation } from 'react-router';
 import { useState } from 'react';
-import { useAuthStore, useThemeStore } from '@/store';
+import { useAuthStore, useThemeStore, useLocaleStore } from '@/store';
 import { Button, Dropdown } from 'antd';
-import { UserOutlined, LogoutOutlined, SettingOutlined, KeyOutlined, SunOutlined, MoonOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, SettingOutlined, KeyOutlined, SunOutlined, MoonOutlined, GlobalOutlined } from '@ant-design/icons';
 import ChangePasswordModal from '@/components/User/ChangePasswordModal';
 import styles from './index.module.scss';
+import { useI18n } from '@/hooks/useI18n';
 
 export interface HeaderProps {
   showLogo?: boolean;
@@ -25,7 +26,9 @@ export default function Header(props: HeaderProps) {
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
+  const { locale, setLocale } = useLocaleStore();
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
+  const { t } = useI18n();
 
   const handleLogout = async () => {
     await logout();
@@ -48,14 +51,14 @@ export default function Header(props: HeaderProps) {
     userMenuItems.push(
       {
         key: 'users',
-        label: '用户管理',
+        label: t('header.users', '用户管理'),
         icon: <UserOutlined />,
         onClick: () => handleNavigate('/users'),
         disabled: isActivePath('/users'),
       },
       {
         key: 'settings',
-        label: '系统设置',
+        label: t('header.settings', '系统设置'),
         icon: <SettingOutlined />,
         onClick: () => handleNavigate('/settings'),
         disabled: isActivePath('/settings'),
@@ -65,18 +68,31 @@ export default function Header(props: HeaderProps) {
 
   userMenuItems.push({
     key: 'change-password',
-    label: '修改密码',
+    label: t('header.changePassword', '修改密码'),
     icon: <KeyOutlined />,
     onClick: () => setChangePasswordModalVisible(true),
   });
 
   userMenuItems.push({
     key: 'logout',
-    label: '退出登陆',
+    label: t('header.logout', '退出登陆'),
     icon: <LogoutOutlined />,
     onClick: handleLogout,
     disabled: false,
   });
+
+  const langMenuItems: any[] = [
+    {
+      key: 'lang-zh',
+      label: t('header.lang.zh', '中文'),
+      onClick: () => setLocale('zh'),
+    },
+    {
+      key: 'lang-en',
+      label: t('header.lang.en', 'English'),
+      onClick: () => setLocale('en'),
+    },
+  ];
 
   return (
     <header className={styles.wrap} style={style}>
@@ -84,7 +100,7 @@ export default function Header(props: HeaderProps) {
         <div className={styles.logo} onClick={() => navigate('/')}>
           {showLogo && (
             <span style={{ fontSize: 16, fontWeight: 500 }}>
-              Prompt Hub
+              {t('header.logo', 'Prompt Hub')}
             </span>
           )}
         </div>
@@ -100,6 +116,11 @@ export default function Header(props: HeaderProps) {
             onClick={toggleTheme}
             style={{ marginRight: 8 }}
           />
+          <Dropdown menu={{ items: langMenuItems }} placement="bottomRight">
+            <Button type="text" icon={<GlobalOutlined />}>
+              {locale === 'zh' ? t('header.lang.zh', '中文') : 'EN'}
+            </Button>
+          </Dropdown>
           {user && (
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <Button type="text" icon={<UserOutlined />}>
@@ -117,4 +138,3 @@ export default function Header(props: HeaderProps) {
     </header >
   );
 }
-

@@ -4,6 +4,7 @@ import { Setting } from '@/apis/setting';
 import { useGeneralSettings } from '@/hooks/useGeneralSettings';
 import { GeneralSettingModal } from './GeneralSettingModal';
 import dayjs from 'dayjs';
+import { useI18n } from '@/hooks/useI18n';
 
 export const GeneralSettings = () => {
   const {
@@ -24,43 +25,44 @@ export const GeneralSettings = () => {
     handleCloseModal,
     handleCreate,
   } = useGeneralSettings();
+  const { t } = useI18n();
 
   const columns: TableColumnsType<Setting> = [
     {
-      title: '分组',
+      title: t('settings.general.group', '分组'),
       dataIndex: 'group',
       key: 'group',
       align: 'center',
     },
     {
-      title: '键',
+      title: t('settings.general.key', '键'),
       dataIndex: 'key',
       key: 'key',
       align: 'center',
     },
     {
-      title: '值',
+      title: t('settings.general.value', '值'),
       dataIndex: 'value',
       key: 'value',
       align: 'center',
       ellipsis: true,
     },
     {
-      title: '创建时间',
+      title: t('settings.general.createdAt', '创建时间'),
       dataIndex: 'created_at',
       key: 'created_at',
       render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
       align: 'center',
     },
     {
-      title: '更新时间',
+      title: t('settings.general.updatedAt', '更新时间'),
       dataIndex: 'updated_at',
       key: 'updated_at',
       render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
       align: 'center',
     },
     {
-      title: '操作',
+      title: t('common.actions', '操作'),
       key: 'action',
       width: 200,
       align: 'center',
@@ -71,16 +73,16 @@ export const GeneralSettings = () => {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            编辑
+            {t('common.edit', '编辑')}
           </Button>
           <Popconfirm
-            title="确定要删除这个配置吗？"
+            title={t('settings.general.deleteConfirmTitle', '确定要删除这个配置吗？')}
             onConfirm={() => handleDelete(record)}
-            okText="确定"
-            cancelText="取消"
+            okText={t('common.ok', '确定')}
+            cancelText={t('common.cancel', '取消')}
           >
             <Button type="link" danger icon={<DeleteOutlined />}>
-              删除
+              {t('common.delete', '删除')}
             </Button>
           </Popconfirm>
         </Space>
@@ -99,7 +101,7 @@ export const GeneralSettings = () => {
         >
           <Space>
             <Input
-              placeholder="筛选分组"
+              placeholder={t('settings.general.filterGroupPlaceholder', '筛选分组')}
               value={filterGroup}
               onChange={(e) => setFilterGroup(e.target.value)}
               style={{ width: 200 }}
@@ -107,13 +109,13 @@ export const GeneralSettings = () => {
             />
           </Space>
           <Space>
-            <div>共 {settings.length} 个配置</div>
+            <div>{t('common.totalPrefix', '共')} {settings.length} {t('settings.general.totalConfigsUnit', '个配置')}</div>
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={handleCreate}
             >
-              新增配置
+              {t('settings.general.newSetting', '新增配置')}
             </Button>
           </Space>
         </Flex>
@@ -126,7 +128,7 @@ export const GeneralSettings = () => {
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
-            showTotal: (total) => `共 ${total} 条`,
+            showTotal: (total) => `${t('common.totalPrefix', '共')} ${total} ${t('common.totalRecordsUnit', '条')}`,
           }}
         />
       </Card>
@@ -145,4 +147,3 @@ export const GeneralSettings = () => {
     </>
   );
 };
-

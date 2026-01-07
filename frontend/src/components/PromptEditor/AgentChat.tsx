@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect, useImperativeHandle, forwardRef, Children, useCallback } from 'react';
- import { Button, Input, Avatar } from 'antd';
+import { Button, Input, Avatar } from 'antd';
 import { ClearOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
- import ReactMarkdown from 'react-markdown';
- import remarkGfm from 'remark-gfm';
- import rehypeHighlight from 'rehype-highlight';
- import rehypeRaw from 'rehype-raw';
- import { useAgentChat } from '@/hooks/useAgentChat';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
+import { useAgentChat } from '@/hooks/useAgentChat';
 import { useAgentMessageHandler } from '@/hooks/useAgentMessageHandler';
 import { useAutoApply } from '@/hooks/useAutoApply';
- import CodeReference from './CodeReference';
- import { CodeReferenceInfo } from './EditorArea';
- import InputToolbar from './InputToolbar';
+import CodeReference from './CodeReference';
+import { CodeReferenceInfo } from './EditorArea';
+import InputToolbar from './InputToolbar';
 import styles from './index.module.scss';
+import { useI18n } from '@/hooks/useI18n';
 
 interface AgentChatProps {
   editorAreaRef?: React.RefObject<{ 
@@ -28,6 +29,7 @@ export interface AgentChatRef {
 }
 
 const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, collapsed, onToggleCollapsed, chatId }, ref) => {
+  const { t } = useI18n();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [codeReferences, setCodeReferences] = useState<CodeReferenceInfo[]>([]);
   const [plainText, setPlainText] = useState<string>('');
@@ -247,7 +249,7 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, col
         </div>
         <div className={styles.messages}>
           {messages.length === 0 ? (
-            <div className={styles.emptyMessage}>暂无对话</div>
+            <div className={styles.emptyMessage}>{t('agentChat.empty', '暂无对话')}</div>
           ) : (
             messages.map((msg, index) => (
               <div key={msg.id} className={msg.role === 'user' ? styles.userMessage : styles.agentMessage}>
@@ -281,9 +283,9 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, col
                                     const ref = getCodeReference(index);
                                     editorAreaRef.current?.replaceCode(content, ref?.lineRange);
                                   }}
-                                  title="应用代码"
+                                  title={t('agentChat.applyCodeTitle', '应用代码')}
                                 >
-                                  应用
+                                  {t('common.apply', '应用')}
                                 </Button>
                               </div>
                             )}
@@ -297,7 +299,7 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, col
                       },
                     }}
                   >
-                    {msg.content || (msg.streaming ? '正在输入...' : '')}
+                    {msg.content || (msg.streaming ? t('agentChat.typing', '正在输入...') : '')}
                   </ReactMarkdown>
                 ) : (
                   (() => {
@@ -395,7 +397,7 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, col
                     setAgentMessage(value);
                   }
                 }}
-                placeholder="输入消息..."
+                placeholder={t('agentChat.inputPlaceholder', '输入消息...')}
                 className={styles.messageInput}
                 autoSize={{ minRows: 1, maxRows: 4 }}
                 onKeyDown={handleKeyDown}

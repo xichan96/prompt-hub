@@ -5,11 +5,13 @@ import { login as loginApi } from '@/apis/auth';
 import { useAuthStore } from '@/store';
 import { useNavigate } from 'react-router';
 import { getUserInfoFromToken } from '@/utils/jwt';
+import { useI18n } from '@/hooks/useI18n';
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuthStore();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
@@ -19,13 +21,13 @@ const Login: React.FC = () => {
       const userInfo = getUserInfoFromToken(token);
       if (userInfo) {
         login(userInfo, token);
-        message.success('登录成功！');
+        message.success(t('login.success', '登录成功！'));
         navigate('/');
       } else {
-        message.error('登录失败，无法解析用户信息');
+        message.error(t('login.parseError', '登录失败，无法解析用户信息'));
       }
     } catch (error) {
-      message.error('登录失败，请重试！');
+      message.error(t('login.failed', '登录失败，请重试！'));
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,7 @@ const Login: React.FC = () => {
             color: 'var(--text-color)',
             margin: 0 
           }}>
-            Prompt Hub
+            {t('header.logo', 'Prompt Hub')}
           </h1>
         </div>
 
@@ -74,21 +76,21 @@ const Login: React.FC = () => {
         >
           <Form.Item
             name="username"
-            rules={[{ required: true, message: '请输入用户名' }]}
+            rules={[{ required: true, message: t('login.usernameRequired', '请输入用户名') }]}
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder="用户名"
+              placeholder={t('login.usernamePlaceholder', '用户名')}
             />
           </Form.Item>
 
           <Form.Item
             name="password"
-            rules={[{ required: true, message: '请输入密码' }]}
+            rules={[{ required: true, message: t('login.passwordRequired', '请输入密码') }]}
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="密码"
+              placeholder={t('login.passwordPlaceholder', '密码')}
             />
           </Form.Item>
 
@@ -105,7 +107,7 @@ const Login: React.FC = () => {
                 borderRadius: 8,
               }}
             >
-              登录
+              {t('login.submit', '登录')}
             </Button>
           </Form.Item>
         </Form>
@@ -115,4 +117,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-

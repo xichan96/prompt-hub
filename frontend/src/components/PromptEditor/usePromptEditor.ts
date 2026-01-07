@@ -4,6 +4,7 @@ import { VersionType } from './types';
 import { usePromptOperations, usePromptVersions, usePromptContent } from '@/hooks';
 import { ActionButton, EditorAreaRef } from './EditorArea';
 import { AgentChatRef } from './AgentChat';
+import { useI18n } from '@/hooks/useI18n';
 
 interface UsePromptEditorProps {
   prompt: Prompt | null;
@@ -20,6 +21,7 @@ export function usePromptEditor({
   namespaceId,
   promptId,
 }: UsePromptEditorProps) {
+  const { t } = useI18n();
   const [selectedVersion, setSelectedVersion] = useState<VersionType>('diff');
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | undefined>();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -140,7 +142,7 @@ export function usePromptEditor({
     
     if (promptId && (selectedVersion === 'edit' || selectedVersion === 'diff')) {
       actions.push({
-        label: '保存编辑版本',
+        label: t('promptEditor.saveEditedVersion', '保存编辑版本'),
         onClick: onSave,
         loading: saving,
       });
@@ -148,7 +150,7 @@ export function usePromptEditor({
     
     if (promptId && selectedVersion === 'diff') {
       actions.push({
-        label: '发布',
+        label: t('promptEditor.publish', '发布'),
         onClick: onPublishClick,
         loading: publishing,
         type: 'primary',
@@ -156,7 +158,7 @@ export function usePromptEditor({
     }
     
     return actions;
-  }, [promptId, selectedVersion, onSave, saving, onPublishClick, publishing]);
+  }, [promptId, selectedVersion, onSave, saving, onPublishClick, publishing, t]);
 
   return {
     selectedVersion,

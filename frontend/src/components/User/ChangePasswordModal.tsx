@@ -2,6 +2,7 @@ import { Modal, Form, Input, message } from 'antd';
 import { useState } from 'react';
 import { updateUser } from '@/apis/user';
 import { useAuthStore } from '@/store';
+import { useI18n } from '@/hooks/useI18n';
 
 interface ChangePasswordModalProps {
   open: boolean;
@@ -12,12 +13,13 @@ export default function ChangePasswordModal({ open, onCancel }: ChangePasswordMo
   const [form] = Form.useForm();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const { t } = useI18n();
 
   const handleSubmit = async (values: any) => {
     if (!user) return;
     
     if (values.password !== values.confirmPassword) {
-      message.error('两次输入的密码不一致');
+      message.error(t('changePassword.passwordMismatchError', '两次输入的密码不一致'));
       return;
     }
 
@@ -27,12 +29,12 @@ export default function ChangePasswordModal({ open, onCancel }: ChangePasswordMo
         id: user.id,
         password: values.password 
       });
-      message.success('密码修改成功');
+      message.success(t('changePassword.success', '密码修改成功'));
       onCancel();
       form.resetFields();
     } catch (error) {
       console.error(error);
-      message.error('密码修改失败');
+      message.error(t('changePassword.failed', '密码修改失败'));
     } finally {
       setLoading(false);
     }
@@ -40,7 +42,7 @@ export default function ChangePasswordModal({ open, onCancel }: ChangePasswordMo
 
   return (
     <Modal
-      title="修改密码"
+      title={t('header.changePassword', '修改密码')}
       open={open}
       onCancel={() => {
         onCancel();
@@ -56,17 +58,17 @@ export default function ChangePasswordModal({ open, onCancel }: ChangePasswordMo
       >
         <Form.Item
           name="password"
-          label="新密码"
-          rules={[{ required: true, message: '请输入新密码' }]}
+          label={t('changePassword.newPassword', '新密码')}
+          rules={[{ required: true, message: t('changePassword.newPasswordRequired', '请输入新密码') }]}
         >
-          <Input.Password placeholder="请输入新密码" />
+          <Input.Password placeholder={t('changePassword.newPasswordPlaceholder', '请输入新密码')} />
         </Form.Item>
         <Form.Item
           name="confirmPassword"
-          label="确认新密码"
-          rules={[{ required: true, message: '请再次输入新密码' }]}
+          label={t('changePassword.confirmNewPassword', '确认新密码')}
+          rules={[{ required: true, message: t('changePassword.confirmNewPasswordRequired', '请再次输入新密码') }]}
         >
-          <Input.Password placeholder="请再次输入新密码" />
+          <Input.Password placeholder={t('changePassword.confirmNewPasswordPlaceholder', '请再次输入新密码')} />
         </Form.Item>
       </Form>
     </Modal>

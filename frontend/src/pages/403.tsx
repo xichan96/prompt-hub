@@ -1,8 +1,10 @@
 import { Result, Button } from 'antd';
 import { useNavigate } from 'react-router';
+import { useI18n } from '@/hooks/useI18n';
 
 export default function NoAuth() {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   return (
     <div style={{
@@ -14,14 +16,13 @@ export default function NoAuth() {
       <Result
         status="403"
         title="403"
-        subTitle="抱歉，您没有权限访问此页面。"
+        subTitle={t('result.403.subtitle', '抱歉，您没有权限访问此页面。')}
         extra={
           <Button type="primary" onClick={() => navigate('/')}>
-            返回首页
+            {t('result.backHome', '返回首页')}
           </Button>
         }
       />
     </div>
   );
 }
-

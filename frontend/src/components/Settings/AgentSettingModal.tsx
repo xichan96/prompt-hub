@@ -1,5 +1,6 @@
 import { Modal, Form, Input, Select, FormInstance } from 'antd';
 import { UpdateAgentSettingRequest } from '@/apis/setting';
+import { useI18n } from '@/hooks/useI18n';
 
 interface AgentSettingModalProps {
   visible: boolean;
@@ -9,9 +10,10 @@ interface AgentSettingModalProps {
 }
 
 export const AgentSettingModal = ({ visible, form, onSubmit, onClose }: AgentSettingModalProps) => {
+  const { t } = useI18n();
   return (
     <Modal
-      title="编辑Agent配置"
+      title={t('agent.editConfigModal', '编辑Agent配置')}
       open={visible}
       onCancel={onClose}
       onOk={() => form.submit()}
@@ -24,19 +26,19 @@ export const AgentSettingModal = ({ visible, form, onSubmit, onClose }: AgentSet
       >
         <Form.Item
           name="name"
-          label="名称"
+          label={t('common.name', '名称')}
         >
-          <Input placeholder="请输入Agent名称" />
+          <Input placeholder={t('agent.namePlaceholder', '请输入Agent名称')} />
         </Form.Item>
         <Form.Item
           name="prompt"
-          label="提示词"
+          label={t('agent.prompt', '提示词')}
         >
-          <Input.TextArea placeholder="请输入Agent提示词" rows={6} />
+          <Input.TextArea placeholder={t('agent.promptPlaceholder', '请输入Agent提示词')} rows={6} />
         </Form.Item>
         <Form.Item
           name="tools"
-          label="工具列表 (MCP)"
+          label={t('agent.tools', '工具列表 (MCP)')}
           rules={[
             {
               validator: (_, value) => {
@@ -46,7 +48,7 @@ export const AgentSettingModal = ({ visible, form, onSubmit, onClose }: AgentSet
                 const urlPattern = /^https?:\/\/.+/;
                 const invalidUrls = value.filter((url: string) => !urlPattern.test(url));
                 if (invalidUrls.length > 0) {
-                  return Promise.reject(new Error('请输入有效的 URL 链接（以 http:// 或 https:// 开头）'));
+                  return Promise.reject(new Error(t('agent.toolsUrlInvalid', '请输入有效的 URL 链接（以 http:// 或 https:// 开头）')));
                 }
                 return Promise.resolve();
               },
@@ -55,7 +57,7 @@ export const AgentSettingModal = ({ visible, form, onSubmit, onClose }: AgentSet
         >
           <Select
             mode="tags"
-            placeholder="请输入 MCP 工具链接（URL），按回车添加"
+            placeholder={t('agent.toolsPlaceholder', '请输入 MCP 工具链接（URL），按回车添加')}
             style={{ width: '100%' }}
             tokenSeparators={[',']}
           />
@@ -64,4 +66,3 @@ export const AgentSettingModal = ({ visible, form, onSubmit, onClose }: AgentSet
     </Modal>
   );
 };
-

@@ -2,6 +2,7 @@ import { Modal, Form, Input, Button, Space, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { Setting } from '@/apis/setting';
 import { parseJsonValue, JsonField } from '@/utils/jsonParser';
+import { useI18n } from '@/hooks/useI18n';
 
 interface GeneralSettingModalProps {
   visible: boolean;
@@ -26,9 +27,10 @@ export const GeneralSettingModal = ({
   setValueIsJson,
   setJsonFields,
 }: GeneralSettingModalProps) => {
+  const { t } = useI18n();
   return (
     <Modal
-      title={editingSetting ? '编辑配置' : '新增配置'}
+      title={editingSetting ? t('settings.general.editSetting', '编辑配置') : t('settings.general.newSetting', '新增配置')}
       open={visible}
       onCancel={onClose}
       onOk={() => form.submit()}
@@ -41,20 +43,20 @@ export const GeneralSettingModal = ({
       >
         <Form.Item
           name="group"
-          label="分组"
-          rules={[{ required: true, message: '请输入分组' }]}
+          label={t('settings.general.group', '分组')}
+          rules={[{ required: true, message: t('settings.general.groupRequired', '请输入分组') }]}
         >
-          <Input placeholder="请输入分组" />
+          <Input placeholder={t('settings.general.groupRequired', '请输入分组')} />
         </Form.Item>
         <Form.Item
           name="key"
-          label="键"
-          rules={[{ required: true, message: '请输入键' }]}
+          label={t('settings.general.key', '键')}
+          rules={[{ required: true, message: t('settings.general.keyRequired', '请输入键') }]}
         >
-          <Input placeholder="请输入键" disabled={!!editingSetting} />
+          <Input placeholder={t('settings.general.keyRequired', '请输入键')} disabled={!!editingSetting} />
         </Form.Item>
         {valueIsJson ? (
-          <Form.Item label="值（JSON格式）">
+          <Form.Item label={t('settings.general.valueJsonLabel', '值（JSON格式）')}>
             <Form.List name="jsonFields">
               {(fields, { add, remove }) => (
                 <>
@@ -68,20 +70,20 @@ export const GeneralSettingModal = ({
                           <Form.Item
                             {...restField}
                             name={[name, 'key']}
-                            rules={[{ required: true, message: '请输入键名' }]}
+                            rules={[{ required: true, message: t('settings.general.keyNameRequired', '请输入键名') }]}
                             style={{ marginBottom: 0 }}
                           >
-                            <Input placeholder="键名" style={{ width: 150 }} />
+                            <Input placeholder={t('settings.general.keyNamePlaceholder', '键名')} style={{ width: 150 }} />
                           </Form.Item>
                           {!hasNestedFields ? (
                             <>
                               <Form.Item
                                 {...restField}
                                 name={[name, 'value']}
-                                rules={[{ required: true, message: '请输入值' }]}
+                                rules={[{ required: true, message: t('settings.general.valueRequired', '请输入值') }]}
                                 style={{ marginBottom: 0, flex: 1 }}
                               >
-                                <Input placeholder="值" style={{ width: 400 }} />
+                                <Input placeholder={t('settings.general.valuePlaceholder', '值')} style={{ width: 400 }} />
                               </Form.Item>
                               <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => {
                                 const prevVal = prevValues?.jsonFields?.[name]?.value;
@@ -110,7 +112,7 @@ export const GeneralSettingModal = ({
                                         }
                                       }}
                                     >
-                                      展开JSON
+                                      {t('settings.general.expandJson', '展开JSON')}
                                     </Button>
                                   ) : null;
                                 }}
@@ -131,26 +133,26 @@ export const GeneralSettingModal = ({
                                           <Form.Item
                                             {...nestedRestField}
                                             name={[nestedName, 'key']}
-                                            rules={[{ required: true, message: '请输入键名' }]}
+                                            rules={[{ required: true, message: t('settings.general.keyNameRequired', '请输入键名') }]}
                                             style={{ marginBottom: 0 }}
                                           >
-                                            <Input placeholder="键名" style={{ width: 120 }} />
+                                            <Input placeholder={t('settings.general.keyNamePlaceholder', '键名')} style={{ width: 120 }} />
                                           </Form.Item>
                                           <Form.Item
                                             {...nestedRestField}
                                             name={[nestedName, 'value']}
-                                            rules={[{ required: true, message: '请输入值' }]}
+                                            rules={[{ required: true, message: t('settings.general.valueRequired', '请输入值') }]}
                                             style={{ marginBottom: 0, flex: 1 }}
                                           >
-                                            <Input placeholder="值" style={{ width: 300 }} />
+                                            <Input placeholder={t('settings.general.valuePlaceholder', '值')} style={{ width: 300 }} />
                                           </Form.Item>
                                           <Button type="link" onClick={() => removeNested(nestedName)} danger size="small">
-                                            删除
+                                            {t('common.delete', '删除')}
                                           </Button>
                                         </Space>
                                       ))}
                                       <Button type="dashed" onClick={() => addNested()} size="small" icon={<PlusOutlined />}>
-                                        添加字段
+                                        {t('settings.general.addField', '添加字段')}
                                       </Button>
                                     </div>
                                   )}
@@ -159,14 +161,14 @@ export const GeneralSettingModal = ({
                             </div>
                           )}
                           <Button type="link" onClick={() => remove(name)} danger>
-                            删除
+                            {t('common.delete', '删除')}
                           </Button>
                         </Space>
                       </div>
                     );
                   })}
                   <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                    添加字段
+                    {t('settings.general.addField', '添加字段')}
                   </Button>
                 </>
               )}
@@ -175,10 +177,10 @@ export const GeneralSettingModal = ({
         ) : (
           <Form.Item
             name="value"
-            label="值"
-            rules={[{ required: true, message: '请输入值' }]}
+            label={t('settings.general.value', '值')}
+            rules={[{ required: true, message: t('settings.general.valueRequired', '请输入值') }]}
           >
-            <Input.TextArea placeholder="请输入值（支持JSON格式）" rows={4} />
+            <Input.TextArea placeholder={t('settings.general.valueJsonPlaceholder', '请输入值（支持JSON格式）')} rows={4} />
           </Form.Item>
         )}
         {editingSetting && !valueIsJson && (
@@ -194,11 +196,11 @@ export const GeneralSettingModal = ({
                     jsonFields: jsonResult.fields,
                   });
                 } else {
-                  message.warning('当前值不是有效的JSON格式');
+                  message.warning(t('settings.general.invalidJson', '当前值不是有效的JSON格式'));
                 }
               }}
             >
-              解析为JSON表单
+              {t('settings.general.parseJsonForm', '解析为JSON表单')}
             </Button>
           </Form.Item>
         )}
@@ -206,4 +208,3 @@ export const GeneralSettingModal = ({
     </Modal>
   );
 };
-

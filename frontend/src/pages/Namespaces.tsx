@@ -7,6 +7,7 @@ import Page from '@/components/Page';
 import PromptEditor from '@/components/PromptEditor';
 import dayjs from 'dayjs';
 import { useNamespaceList, usePromptList } from '@/hooks';
+import { useI18n } from '@/hooks/useI18n';
 
 interface NamespaceTabLabelProps {
   ns: Namespace;
@@ -15,6 +16,7 @@ interface NamespaceTabLabelProps {
 }
 
 const NamespaceTabLabel = ({ ns, onEdit, onDelete }: NamespaceTabLabelProps) => {
+  const { t } = useI18n();
   const content = (
     <div onClick={(e) => e.stopPropagation()}>
       <Space size={4}>
@@ -28,15 +30,15 @@ const NamespaceTabLabel = ({ ns, onEdit, onDelete }: NamespaceTabLabelProps) => 
           }}
         />
         <Popconfirm
-          title="确定要删除这个命名空间吗？"
-          description="删除后无法恢复，且该命名空间下的所有提示词也将被删除。"
+          title={t('namespaces.tabDeleteConfirmTitle', '确定要删除这个命名空间吗？')}
+          description={t('namespaces.tabDeleteConfirmDesc', '删除后无法恢复，且该命名空间下的所有提示词也将被删除。')}
           onConfirm={(e) => {
             e?.stopPropagation();
             onDelete(ns.id);
           }}
           onCancel={(e) => e?.stopPropagation()}
-          okText="确定"
-          cancelText="取消"
+          okText={t('common.ok', '确定')}
+          cancelText={t('common.cancel', '取消')}
         >
           <Button
             type="text"
@@ -57,7 +59,7 @@ const NamespaceTabLabel = ({ ns, onEdit, onDelete }: NamespaceTabLabelProps) => 
       placement="bottom"
       overlayInnerStyle={{ padding: '4px' }}
     >
-      <span className="namespace-tab-label" title={ns.description || '暂无描述'}>
+      <span className="namespace-tab-label" title={ns.description || t('namespaces.noDescription', '暂无描述')}>
         {ns.name}
       </span>
     </Popover>
@@ -66,6 +68,7 @@ const NamespaceTabLabel = ({ ns, onEdit, onDelete }: NamespaceTabLabelProps) => 
 
 export default function Namespaces() {
   const { token } = theme.useToken();
+  const { t } = useI18n();
   const [activeNamespaceId, setActiveNamespaceId] = useState<string>('');
   const [editingNamespace, setEditingNamespace] = useState<Namespace | null>(null);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
@@ -155,7 +158,7 @@ export default function Namespaces() {
 
   const promptColumns: TableColumnsType<Prompt> = [
     {
-      title: '名称',
+      title: t('common.name', '名称'),
       dataIndex: 'name',
       key: 'name',
       align: 'center',
@@ -170,28 +173,28 @@ export default function Namespaces() {
       ),
     },
     {
-      title: '描述',
+      title: t('common.description', '描述'),
       dataIndex: 'description',
       key: 'description',
       align: 'center',
       ellipsis: true,
     },
     {
-      title: '创建时间',
+      title: t('namespaces.createdAt', '创建时间'),
       dataIndex: 'created_at',
       key: 'created_at',
       render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
       align: 'center',
     },
     {
-      title: '更新时间',
+      title: t('namespaces.updatedAt', '更新时间'),
       dataIndex: 'updated_at',
       key: 'updated_at',
       render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
       align: 'center',
     },
     {
-      title: '操作',
+      title: t('common.actions', '操作'),
       key: 'action',
       width: 180,
       align: 'center',
@@ -204,16 +207,16 @@ export default function Namespaces() {
             onClick={() => handleEditPrompt(record)}
             style={{ padding: 0 }}
           >
-            编辑
+            {t('common.edit', '编辑')}
           </Button>
           <Popconfirm
-            title="确定要删除这个提示词吗？"
+            title={t('namespaces.deletePromptConfirmTitle', '确定要删除这个提示词吗？')}
             onConfirm={() => handleDeletePrompt(record.id)}
-            okText="确定"
-            cancelText="取消"
+            okText={t('common.ok', '确定')}
+            cancelText={t('common.cancel', '取消')}
           >
             <Button type="link" danger icon={<DeleteOutlined />} style={{ padding: 0 }}>
-              删除
+              {t('common.delete', '删除')}
             </Button>
           </Popconfirm>
         </Space>
@@ -222,7 +225,7 @@ export default function Namespaces() {
   ];
 
   return (
-    <Page title="提示词管理">
+    <Page title={t('namespaces.pageTitle', '提示词管理')}>
       <Tabs
         activeKey={activeNamespaceId}
         onChange={(key) => {
@@ -270,7 +273,7 @@ export default function Namespaces() {
             <Space>
               <Input
                 prefix={<SearchOutlined style={{ color: token.colorTextPlaceholder }} />}
-                placeholder="搜索提示词名称..."
+                placeholder={t('namespaces.searchPlaceholder', '搜索提示词名称...')}
                 value={filterName}
                 onChange={(e) => setFilterName(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
@@ -284,7 +287,7 @@ export default function Namespaces() {
               />
             </Space>
             <Space>
-              <div>共{prompts.length}个提示词</div>
+              <div>{t('namespaces.totalPrefix', '共')}{prompts.length}{t('namespaces.totalPromptsUnit', '个提示词')}</div>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -296,7 +299,7 @@ export default function Namespaces() {
                   setPromptModalVisible(true);
                 }}
               >
-                新增提示词
+                {t('namespaces.createPrompt', '新增提示词')}
               </Button>
             </Space>
           </Flex>
@@ -309,14 +312,14 @@ export default function Namespaces() {
             pagination={{
               pageSize: 10,
               showSizeChanger: true,
-              showTotal: (total) => `共 ${total} 条`,
+              showTotal: (total) => `${t('common.totalPrefix', '共')} ${total} ${t('common.totalRecordsUnit', '条')}`,
             }}
           />
         </Card>
       )}
 
       <Modal
-        title={editingNamespace ? '编辑命名空间' : '新增命名空间'}
+        title={editingNamespace ? t('namespaces.modal.editNamespace', '编辑命名空间') : t('namespaces.modal.newNamespace', '新增命名空间')}
         open={namespaceModalVisible}
         onCancel={() => {
           setNamespaceModalVisible(false);
@@ -332,16 +335,16 @@ export default function Namespaces() {
         >
           <Form.Item
             name="name"
-            label="名称"
-            rules={[{ required: true, message: '请输入名称' }]}
+            label={t('common.name', '名称')}
+            rules={[{ required: true, message: t('common.nameRequired', '请输入名称') }]}
           >
-            <Input placeholder="请输入名称" />
+            <Input placeholder={t('common.nameRequired', '请输入名称')} />
           </Form.Item>
           <Form.Item
             name="description"
-            label="描述"
+            label={t('common.description', '描述')}
           >
-            <Input.TextArea placeholder="请输入描述" rows={4} />
+            <Input.TextArea placeholder={t('common.descriptionPlaceholder', '请输入描述')} rows={4} />
           </Form.Item>
         </Form>
       </Modal>
@@ -350,14 +353,14 @@ export default function Namespaces() {
         title={
           editingPrompt ? (
             <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>编辑提示词</span>
+              <span>{t('namespaces.modal.editPrompt', '编辑提示词')}</span>
               <HistoryOutlined 
                 style={{ cursor: 'pointer' }}
                 onClick={() => setShowVersionList(!showVersionList)}
               />
             </span>
           ) : (
-            '新增提示词'
+            t('namespaces.modal.newPrompt', '新增提示词')
           )
         }
         open={promptModalVisible}
@@ -400,23 +403,23 @@ export default function Namespaces() {
             >
               <Form.Item
                 name="name"
-                label="名称"
-                rules={[{ required: true, message: '请输入名称' }]}
+                label={t('common.name', '名称')}
+                rules={[{ required: true, message: t('common.nameRequired', '请输入名称') }]}
               >
-                <Input placeholder="请输入名称" />
+                <Input placeholder={t('common.nameRequired', '请输入名称')} />
               </Form.Item>
               <Form.Item
                 name="description"
-                label="描述"
+                label={t('common.description', '描述')}
               >
-                <Input.TextArea placeholder="请输入描述" rows={3} />
+                <Input.TextArea placeholder={t('common.descriptionPlaceholder', '请输入描述')} rows={3} />
               </Form.Item>
               <Form.Item
                 name="content"
-                label="内容"
-                rules={[{ required: true, message: '请输入内容' }]}
+                label={t('common.content', '内容')}
+                rules={[{ required: true, message: t('common.contentRequired', '请输入内容') }]}
               >
-                <Input.TextArea placeholder="请输入提示词内容" rows={10} />
+                <Input.TextArea placeholder={t('namespaces.promptContentPlaceholder', '请输入提示词内容')} rows={10} />
               </Form.Item>
             </Form>
           </div>

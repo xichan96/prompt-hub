@@ -1,5 +1,6 @@
 import { Modal, Form, Input, Select, FormInstance } from 'antd';
 import { UpdateLLMSettingRequest } from '@/apis/setting';
+import { useI18n } from '@/hooks/useI18n';
 
 interface LLMSettingModalProps {
   visible: boolean;
@@ -9,9 +10,10 @@ interface LLMSettingModalProps {
 }
 
 export const LLMSettingModal = ({ visible, form, onSubmit, onClose }: LLMSettingModalProps) => {
+  const { t } = useI18n();
   return (
     <Modal
-      title="编辑LLM配置"
+      title={t('llm.editConfig', '编辑LLM配置')}
       open={visible}
       onCancel={onClose}
       onOk={() => form.submit()}
@@ -24,10 +26,10 @@ export const LLMSettingModal = ({ visible, form, onSubmit, onClose }: LLMSetting
       >
         <Form.Item
           name="provider"
-          label="提供商"
-          rules={[{ required: true, message: '请选择提供商' }]}
+          label={t('llm.provider', '提供商')}
+          rules={[{ required: true, message: t('llm.providerRequired', '请选择提供商') }]}
         >
-          <Select placeholder="请选择提供商">
+          <Select placeholder={t('llm.providerSelectPlaceholder', '请选择提供商')}>
             <Select.Option value="openai">OpenAI</Select.Option>
             <Select.Option value="deepseek">DeepSeek</Select.Option>
             <Select.Option value="volce">Volce</Select.Option>
@@ -43,37 +45,37 @@ export const LLMSettingModal = ({ visible, form, onSubmit, onClose }: LLMSetting
                   <>
                     <Form.Item
                       name={['openai', 'api_key']}
-                      label="API Key"
-                      rules={[{ required: true, message: '请输入API Key' }]}
+                      label={t('common.apiKey', 'API Key')}
+                      rules={[{ required: true, message: t('common.apiKeyRequired', '请输入API Key') }]}
                     >
-                      <Input.Password placeholder="请输入API Key" />
+                      <Input.Password placeholder={t('common.apiKeyRequired', '请输入API Key')} />
                     </Form.Item>
                     <Form.Item
                       name={['openai', 'base_url']}
-                      label="Base URL"
-                      rules={[{ required: true, message: '请输入Base URL' }]}
+                      label={t('common.baseUrl', 'Base URL')}
+                      rules={[{ required: true, message: t('common.baseUrlRequired', '请输入Base URL') }]}
                     >
-                      <Input placeholder="请输入Base URL" />
+                      <Input placeholder={t('common.baseUrlRequired', '请输入Base URL')} />
                     </Form.Item>
                     <Form.Item
                       name={['openai', 'model']}
-                      label="Model"
-                      rules={[{ required: true, message: '请输入Model' }]}
+                      label={t('common.model', 'Model')}
+                      rules={[{ required: true, message: t('common.modelRequired', '请输入Model') }]}
                     >
-                      <Input placeholder="请输入Model" />
+                      <Input placeholder={t('common.modelRequired', '请输入Model')} />
                     </Form.Item>
                     <Form.Item
                       name={['openai', 'org_id']}
-                      label="Org ID"
+                      label={t('llm.orgId', 'Org ID')}
                     >
-                      <Input placeholder="请输入Org ID" />
+                      <Input placeholder={t('llm.orgIdPlaceholder', '请输入Org ID')} />
                     </Form.Item>
                     <Form.Item
                       name={['openai', 'api_type']}
-                      label="API Type"
-                      rules={[{ required: true, message: '请输入API Type' }]}
+                      label={t('llm.apiType', 'API Type')}
+                      rules={[{ required: true, message: t('llm.apiTypeRequired', '请输入API Type') }]}
                     >
-                      <Input placeholder="请输入API Type" />
+                      <Input placeholder={t('llm.apiTypeRequired', '请输入API Type')} />
                     </Form.Item>
                   </>
                 )}
@@ -82,24 +84,24 @@ export const LLMSettingModal = ({ visible, form, onSubmit, onClose }: LLMSetting
                   <>
                     <Form.Item
                       name={['deepseek', 'api_key']}
-                      label="API Key"
-                      rules={[{ required: true, message: '请输入API Key' }]}
+                      label={t('common.apiKey', 'API Key')}
+                      rules={[{ required: true, message: t('common.apiKeyRequired', '请输入API Key') }]}
                     >
-                      <Input.Password placeholder="请输入API Key" />
+                      <Input.Password placeholder={t('common.apiKeyRequired', '请输入API Key')} />
                     </Form.Item>
                     <Form.Item
                       name={['deepseek', 'base_url']}
-                      label="Base URL"
-                      rules={[{ required: true, message: '请输入Base URL' }]}
+                      label={t('common.baseUrl', 'Base URL')}
+                      rules={[{ required: true, message: t('common.baseUrlRequired', '请输入Base URL') }]}
                     >
-                      <Input placeholder="请输入Base URL" />
+                      <Input placeholder={t('common.baseUrlRequired', '请输入Base URL')} />
                     </Form.Item>
                     <Form.Item
                       name={['deepseek', 'model']}
-                      label="Model"
-                      rules={[{ required: true, message: '请输入Model' }]}
+                      label={t('common.model', 'Model')}
+                      rules={[{ required: true, message: t('common.modelRequired', '请输入Model') }]}
                     >
-                      <Input placeholder="请输入Model" />
+                      <Input placeholder={t('common.modelRequired', '请输入Model')} />
                     </Form.Item>
                   </>
                 )}
@@ -108,22 +110,22 @@ export const LLMSettingModal = ({ visible, form, onSubmit, onClose }: LLMSetting
                   <>
                     <Form.Item
                       name={['volce', 'api_key']}
-                      label="API Key"
-                      rules={[{ required: true, message: '请输入API Key' }]}
+                      label={t('common.apiKey', 'API Key')}
+                      rules={[{ required: true, message: t('common.apiKeyRequired', '请输入API Key') }]}
                     >
-                      <Input.Password placeholder="请输入API Key" />
+                      <Input.Password placeholder={t('common.apiKeyRequired', '请输入API Key')} />
                     </Form.Item>
                     <Form.Item
                       name={['volce', 'base_url']}
-                      label="Base URL"
+                      label={t('common.baseUrl', 'Base URL')}
                     >
-                      <Input placeholder="请输入Base URL" />
+                      <Input placeholder={t('common.baseUrlRequired', '请输入Base URL')} />
                     </Form.Item>
                     <Form.Item
                       name={['volce', 'model']}
-                      label="Model"
+                      label={t('common.model', 'Model')}
                     >
-                      <Input placeholder="请输入Model" />
+                      <Input placeholder={t('common.modelRequired', '请输入Model')} />
                     </Form.Item>
                   </>
                 )}
@@ -135,4 +137,3 @@ export const LLMSettingModal = ({ visible, form, onSubmit, onClose }: LLMSetting
     </Modal>
   );
 };
-

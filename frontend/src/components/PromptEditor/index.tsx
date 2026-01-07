@@ -7,6 +7,7 @@ import EditorArea from './EditorArea';
 import AgentChat from './AgentChat';
 import PublishModal from './PublishModal';
 import { usePromptEditor } from './usePromptEditor';
+import { useI18n } from '@/hooks/useI18n';
 
 interface PromptEditorProps {
   prompt: Prompt | null;
@@ -47,18 +48,19 @@ export default function PromptEditor({ prompt, content, onContentChange, onPubli
     namespaceId,
     promptId,
   });
+  const { t } = useI18n();
 
   return (
     <div className={styles.container}>
       <EditorHeader 
-        title={`当前版本: ${prompt?.name || ''}`} 
+        title={`${t('promptEditor.currentVersion', '当前版本')}: ${prompt?.name || ''}`} 
         onClick={handleTitleClick}
-        status={!hasPublished && promptId ? '未发布' : undefined}
+        status={!hasPublished && promptId ? t('promptEditor.unpublished', '未发布') : undefined}
         versionIcon={
           <span
             className={styles.versionIcon}
             onClick={() => setAgentCollapsed(!agentCollapsed)}
-            title={agentCollapsed ? '展开聊天' : '收起聊天'}
+            title={agentCollapsed ? t('chat.expand', '展开聊天') : t('chat.collapse', '收起聊天')}
           >
             {agentCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </span>

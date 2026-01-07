@@ -5,6 +5,7 @@ import Editor, { DiffEditor, OnMount, DiffOnMount } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import { useThemeStore } from '@/store';
 import styles from './index.module.scss';
+import { useI18n } from '@/hooks/useI18n';
 
 export interface ActionButton {
   label: string;
@@ -47,6 +48,7 @@ const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({
   onAddToChat,
   fileName = 'editor'
 }, ref) => {
+  const { t } = useI18n();
   const { theme } = useThemeStore();
   const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -388,7 +390,7 @@ const replaceCode = useCallback((content: string, lineRange?: string) => {
             />
           ) : (
             <div className={styles.noPublished}>
-              <div className={styles.noPublishedText}>未发布</div>
+              <div className={styles.noPublishedText}>{t('promptEditor.unpublished', '未发布')}</div>
             </div>
           )
         ) : (
@@ -419,12 +421,12 @@ const replaceCode = useCallback((content: string, lineRange?: string) => {
             <button
               className={styles.terminalButton}
               onClick={handleAddToChat}
-              title="将选中内容添加到聊天"
+              title={t('promptEditor.addToChatTitle', '将选中内容添加到聊天')}
             >
               <span className={styles.terminalIcon}>
                 <ConsoleSqlOutlined />
               </span>
-              <span className={styles.terminalText}>添加到聊天</span>
+              <span className={styles.terminalText}>{t('promptEditor.addToChat', '添加到聊天')}</span>
             </button>
           </div>
         )}

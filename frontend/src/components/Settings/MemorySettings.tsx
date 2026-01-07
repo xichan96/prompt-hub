@@ -2,9 +2,11 @@ import { Card, Button, Flex, Descriptions } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { useMemorySettings } from '@/hooks/useMemorySettings';
 import { MemorySettingModal } from './MemorySettingModal';
+import { useI18n } from '@/hooks/useI18n';
 
 export const MemorySettings = () => {
   const { setting, handleEdit, modalVisible, form, handleSubmit, handleCloseModal } = useMemorySettings();
+  const { t } = useI18n();
 
   return (
     <>
@@ -20,26 +22,26 @@ export const MemorySettings = () => {
             icon={<EditOutlined />}
             onClick={handleEdit}
           >
-            编辑Memory配置
+            {t('memory.editConfigModal', '编辑Memory配置')}
           </Button>
         </Flex>
         {setting && (
           <Card size="small" style={{ marginBottom: 16 }}>
             <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="Provider">{setting.provider}</Descriptions.Item>
+              <Descriptions.Item label={t('memory.provider', 'Memory Provider')}>{setting.provider}</Descriptions.Item>
               
               {setting.provider === 'simple' && (
                 <>
-                  <Descriptions.Item label="最大历史消息数">{setting.simple?.max_history_messages}</Descriptions.Item>
+                  <Descriptions.Item label={t('memory.simple.maxHistory', '最大历史消息数')}>{setting.simple?.max_history_messages}</Descriptions.Item>
                 </>
               )}
 
               {setting.provider === 'redis' && (
                 <>
-                  <Descriptions.Item label="Host">{setting.redis?.host}</Descriptions.Item>
-                  <Descriptions.Item label="Port">{setting.redis?.port}</Descriptions.Item>
-                  <Descriptions.Item label="Username">{setting.redis?.username || '-'}</Descriptions.Item>
-                  <Descriptions.Item label="DB">{setting.redis?.db}</Descriptions.Item>
+                  <Descriptions.Item label={t('common.host', 'Host')}>{setting.redis?.host}</Descriptions.Item>
+                  <Descriptions.Item label={t('common.port', 'Port')}>{setting.redis?.port}</Descriptions.Item>
+                  <Descriptions.Item label={t('common.username', 'Username')}>{setting.redis?.username || '-'}</Descriptions.Item>
+                  <Descriptions.Item label={t('memory.redis.db', 'DB')}>{setting.redis?.db}</Descriptions.Item>
                   <Descriptions.Item label="Key Prefix">{setting.redis?.key_prefix || '-'}</Descriptions.Item>
                   <Descriptions.Item label="最大历史消息数">{setting.redis?.max_history_messages}</Descriptions.Item>
                 </>

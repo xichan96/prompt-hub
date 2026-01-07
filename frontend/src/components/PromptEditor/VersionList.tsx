@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import styles from './index.module.scss';
 import { VersionType, VersionItem } from './types';
 import { getPromptList, Prompt } from '@/apis/prompt';
+import { useI18n } from '@/hooks/useI18n';
 
 interface VersionListProps {
   selectedVersion: VersionType;
@@ -25,6 +26,7 @@ export default function VersionList({
   const [versions, setVersions] = useState<VersionItem[]>([]);
   const [loading, setLoading] = useState(false);
   const lastFetchKeyRef = useRef<string>('');
+  const { t, locale } = useI18n();
 
   useEffect(() => {
     if (!namespaceId || !promptName) {
@@ -88,7 +90,7 @@ export default function VersionList({
     return (
       <div className={styles.sidebar}>
         <div className={styles.versionList}>
-          <div className={styles.versionItem}>加载中...</div>
+          <div className={styles.versionItem}>{t('common.loading', '加载中...')}</div>
         </div>
       </div>
     );
@@ -98,7 +100,7 @@ export default function VersionList({
     <div className={styles.sidebar}>
       <div className={styles.versionList}>
         {versions.length === 0 ? (
-          <div className={styles.versionItem}>暂无版本</div>
+          <div className={styles.versionItem}>{t('promptEditor.noVersion', '暂无版本')}</div>
         ) : (
           versions.map((version) => {
             const isActive = selectedVersion === 'history' && version.type === 'history' && version.id === selectedHistoryId;
@@ -114,13 +116,20 @@ export default function VersionList({
                 const hours = Math.floor(diff / (1000 * 60 * 60));
                 if (hours === 0) {
                   const minutes = Math.floor(diff / (1000 * 60));
-                  return minutes <= 0 ? '刚刚' : `${minutes}分钟前`;
+                  return minutes <= 0
+                    ? t('time.justNow', '刚刚')
+                    : `${minutes}${t('time.minutesAgo', '分钟前')}`;
                 }
-                return `${hours}小时前`;
+                return locale === 'en'
+                  ? `${hours} ${t('time.hoursAgo', 'hours ago')}`
+                  : `${hours}${t('time.hoursAgo', '小时前')}`;
               } else if (days < 7) {
-                return `${days}天前`;
+                return locale === 'en'
+                  ? `${days} ${t('time.daysAgo', 'days ago')}`
+                  : `${days}${t('time.daysAgo', '天前')}`;
               } else {
-                return date.toLocaleDateString('zh-CN', {
+                const lang = locale === 'en' ? 'en-US' : 'zh-CN';
+                return date.toLocaleDateString(lang, {
                   year: 'numeric',
                   month: '2-digit',
                   day: '2-digit',

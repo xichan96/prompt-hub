@@ -4,6 +4,7 @@ import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { createUser, deleteUser, getUsers, updateUser, User, CreateUserRequest, UpdateUserRequest } from '@/apis/user';
 import Page from '@/components/Page';
 import dayjs from 'dayjs';
+import { useI18n } from '@/hooks/useI18n';
 
 export default function Users() {
   const [loading, setLoading] = useState(false);
@@ -11,6 +12,7 @@ export default function Users() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const { t } = useI18n();
 
   const getList = async () => {
     try {
@@ -37,10 +39,10 @@ export default function Users() {
   const handleDelete = async (id: string) => {
     try {
       await deleteUser(id);
-      message.success('删除成功');
+      message.success(t('common.deleteSuccess', '删除成功'));
       getList();
     } catch (error) {
-      message.error('删除失败');
+      message.error(t('common.deleteFailed', '删除失败'));
     }
   };
 
@@ -64,33 +66,33 @@ export default function Users() {
 
   const columns: TableColumnsType<User> = [
     {
-      title: '用户名',
+      title: t('users.username', '用户名'),
       dataIndex: 'username',
       key: 'username',
       align: 'center',
     },
     {
-      title: '角色',
+      title: t('users.role', '角色'),
       dataIndex: 'role',
       key: 'role',
       align: 'center',
     },
     {
-      title: '创建时间',
+      title: t('users.createdAt', '创建时间'),
       dataIndex: 'created_at',
       key: 'created_at',
       render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
       align: 'center',
     },
     {
-      title: '更新时间',
+      title: t('users.updatedAt', '更新时间'),
       dataIndex: 'updated_at',
       key: 'updated_at',
       render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
       align: 'center',
     },
     {
-      title: '操作',
+      title: t('common.actions', '操作'),
       key: 'action',
       width: 200,
       align: 'center',
@@ -101,16 +103,16 @@ export default function Users() {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            编辑
+            {t('common.edit', '编辑')}
           </Button>
           <Popconfirm
-            title="确定要删除这个用户吗？"
+            title={t('users.deleteConfirmTitle', '确定要删除这个用户吗？')}
             onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
+            okText={t('common.ok', '确定')}
+            cancelText={t('common.cancel', '取消')}
           >
             <Button type="link" danger icon={<DeleteOutlined />}>
-              删除
+              {t('common.delete', '删除')}
             </Button>
           </Popconfirm>
         </Space>
@@ -119,7 +121,7 @@ export default function Users() {
   ];
 
   return (
-    <Page title="用户管理" description="管理系统用户账号">
+    <Page title={t('users.title', '用户管理')} description={t('users.description', '管理系统用户账号')}>
       <Card className="content-card">
         <Flex
           align="center"
@@ -127,7 +129,7 @@ export default function Users() {
           gap={20}
           style={{ marginBottom: 16 }}
         >
-          <div>共 {users.length} 个用户</div>
+          <div>{t('users.totalPrefix', '共')} {users.length} {t('users.totalUsersUnit', '个用户')}</div>
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -137,7 +139,7 @@ export default function Users() {
               setModalVisible(true);
             }}
           >
-            新增用户
+            {t('users.create', '新增用户')}
           </Button>
         </Flex>
 
@@ -149,13 +151,13 @@ export default function Users() {
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
-            showTotal: (total) => `共 ${total} 条`,
+            showTotal: (total) => `${t('common.totalPrefix', '共')} ${total} ${t('common.totalRecordsUnit', '条')}`,
           }}
         />
       </Card>
 
       <Modal
-        title={editingUser ? '编辑用户' : '新增用户'}
+        title={editingUser ? t('users.editUser', '编辑用户') : t('users.newUser', '新增用户')}
         open={modalVisible}
         onCancel={() => {
           setModalVisible(false);
@@ -171,26 +173,26 @@ export default function Users() {
         >
           <Form.Item
             name="username"
-            label="用户名"
-            rules={[{ required: true, message: '请输入用户名' }]}
+            label={t('users.username', '用户名')}
+            rules={[{ required: true, message: t('login.usernameRequired', '请输入用户名') }]}
           >
-            <Input placeholder="请输入用户名" />
+            <Input placeholder={t('login.usernameRequired', '请输入用户名')} />
           </Form.Item>
           <Form.Item
             name="password"
-            label="密码"
-            rules={[{ required: !editingUser, message: '请输入密码' }]}
+            label={t('users.password', '密码')}
+            rules={[{ required: !editingUser, message: t('login.passwordRequired', '请输入密码') }]}
           >
-            <Input.Password placeholder={editingUser ? '留空则不修改' : '请输入密码'} />
+            <Input.Password placeholder={editingUser ? t('users.passwordPlaceholderEdit', '留空则不修改') : t('users.passwordPlaceholderNew', '请输入密码')} />
           </Form.Item>
           <Form.Item
             name="role"
-            label="角色"
-            rules={[{ required: true, message: '请选择角色' }]}
+            label={t('users.role', '角色')}
+            rules={[{ required: true, message: t('users.roleSelectRequired', '请选择角色') }]}
           >
-            <Select placeholder="请选择角色">
-              <Select.Option value="admin">管理员</Select.Option>
-              <Select.Option value="user">用户</Select.Option>
+            <Select placeholder={t('users.roleSelectPlaceholder', '请选择角色')}>
+              <Select.Option value="admin">{t('users.role.admin', '管理员')}</Select.Option>
+              <Select.Option value="user">{t('users.role.user', '用户')}</Select.Option>
             </Select>
           </Form.Item>
         </Form>
@@ -198,4 +200,3 @@ export default function Users() {
     </Page>
   );
 }
-

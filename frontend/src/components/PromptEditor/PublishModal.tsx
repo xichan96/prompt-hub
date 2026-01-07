@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Input } from 'antd';
+import { useI18n } from '@/hooks/useI18n';
 
 interface PublishModalProps {
   open: boolean;
@@ -18,9 +19,10 @@ const PublishModal: React.FC<PublishModalProps> = ({
   description,
   onDescriptionChange,
 }) => {
+  const { t } = useI18n();
   return (
     <Modal
-      title="发布提示词"
+      title={t('promptEditor.publishTitle', '发布提示词')}
       open={open}
       onOk={onConfirm}
       onCancel={onCancel}
@@ -30,7 +32,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
         rows={4}
         value={description}
         onChange={(e) => onDescriptionChange(e.target.value)}
-        placeholder="请输入发布说明"
+        placeholder={t('promptEditor.publishDescriptionPlaceholder', '请输入发布说明')}
       />
     </Modal>
   );
