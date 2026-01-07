@@ -9,6 +9,7 @@ import (
 	"github.com/xichan96/prompt-hub/internal/pkg/errcode"
 	"github.com/xichan96/prompt-hub/pkg/ec"
 	"github.com/xichan96/prompt-hub/pkg/web/cctx"
+	"gorm.io/gorm"
 )
 
 type AppIer interface {
@@ -77,7 +78,14 @@ func (a *app) DeleteNamespace(ctx context.Context, id string) error {
 }
 
 func (a *app) GetNamespaces(ctx context.Context) ([]*appdto.Namespace, error) {
-	namespaces, err := a.nps.GetList(ctx)
+	var options []func(*gorm.DB) *gorm.DB
+	userRole := cctx.GetUserRole[string](ctx)
+	if userRole != "admin" {
+		userID := cctx.GetUserID[string](ctx)
+		options = append(options, a.nps.Where(a.nps.F().CreatedBy.Eq(userID)))
+	}
+
+	namespaces, err := a.nps.GetList(ctx, options...)
 	if err != nil {
 		return nil, err
 	}

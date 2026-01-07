@@ -25,7 +25,7 @@ export const Main: React.FC<{
       height: "100vh",
       paddingTop: 48,
       display: "flex",
-      backgroundColor: "#141414",
+      backgroundColor: "var(--body-bg)",
       ...style,
     }}
   >
@@ -42,7 +42,7 @@ export const Content: React.FC<{
       width: "100%",
       minHeight: "100%",
       overflowY: "auto",
-      backgroundColor: "#141414",
+      backgroundColor: "var(--body-bg)",
       padding: "24px",
       ...style,
     }}

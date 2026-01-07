@@ -35,7 +35,7 @@ const Login: React.FC = () => {
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        background: 'var(--login-bg)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -46,10 +46,10 @@ const Login: React.FC = () => {
         style={{
           width: '100%',
           maxWidth: 400,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+          boxShadow: '0 8px 32px var(--shadow-color)',
           borderRadius: 16,
-          backgroundColor: '#1f1f1f',
-          border: '1px solid #434343',
+          backgroundColor: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
         }}
         styles={{ 
           body: { padding: '40px 32px' }
@@ -59,7 +59,7 @@ const Login: React.FC = () => {
           <h1 style={{ 
             fontSize: 24, 
             fontWeight: 600, 
-            color: 'rgba(255, 255, 255, 0.85)',
+            color: 'var(--text-color)',
             margin: 0 
           }}>
             Prompt Hub

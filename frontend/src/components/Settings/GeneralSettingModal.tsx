@@ -63,7 +63,7 @@ export const GeneralSettingModal = ({
                     const hasNestedFields = fieldData?.nestedFields && fieldData.nestedFields.length > 0;
                     
                     return (
-                      <div key={key} style={{ marginBottom: 16, padding: 12, border: '1px solid #d9d9d9', borderRadius: 4 }}>
+                      <div key={key} style={{ marginBottom: 16, padding: 12, border: '1px solid var(--border-color)', borderRadius: 4 }}>
                         <Space style={{ display: 'flex', marginBottom: hasNestedFields ? 8 : 0 }} align="baseline">
                           <Form.Item
                             {...restField}

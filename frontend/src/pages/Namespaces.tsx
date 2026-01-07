@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Button, Space, Flex, Popconfirm, Form, Input, Modal, TableColumnsType, Tabs } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, HistoryOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Space, Flex, Popconfirm, Form, Input, Modal, TableColumnsType, Tabs, Tooltip, Popover, theme } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, HistoryOutlined, SearchOutlined } from '@ant-design/icons';
 import { Prompt, CreatePromptRequest } from '@/apis/prompt';
 import { Namespace, CreateNamespaceRequest, UpdateNamespaceRequest } from '@/apis/namespace';
 import Page from '@/components/Page';
@@ -8,7 +8,64 @@ import PromptEditor from '@/components/PromptEditor';
 import dayjs from 'dayjs';
 import { useNamespaceList, usePromptList } from '@/hooks';
 
+interface NamespaceTabLabelProps {
+  ns: Namespace;
+  onEdit: (ns: Namespace) => void;
+  onDelete: (id: string) => void;
+}
+
+const NamespaceTabLabel = ({ ns, onEdit, onDelete }: NamespaceTabLabelProps) => {
+  const content = (
+    <div onClick={(e) => e.stopPropagation()}>
+      <Space size={4}>
+        <Button
+          type="text"
+          size="small"
+          icon={<EditOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(ns);
+          }}
+        />
+        <Popconfirm
+          title="确定要删除这个命名空间吗？"
+          description="删除后无法恢复，且该命名空间下的所有提示词也将被删除。"
+          onConfirm={(e) => {
+            e?.stopPropagation();
+            onDelete(ns.id);
+          }}
+          onCancel={(e) => e?.stopPropagation()}
+          okText="确定"
+          cancelText="取消"
+        >
+          <Button
+            type="text"
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </Popconfirm>
+      </Space>
+    </div>
+  );
+
+  return (
+    <Popover
+      content={content}
+      trigger="hover"
+      placement="bottom"
+      overlayInnerStyle={{ padding: '4px' }}
+    >
+      <span className="namespace-tab-label" title={ns.description || '暂无描述'}>
+        {ns.name}
+      </span>
+    </Popover>
+  );
+};
+
 export default function Namespaces() {
+  const { token } = theme.useToken();
   const [activeNamespaceId, setActiveNamespaceId] = useState<string>('');
   const [editingNamespace, setEditingNamespace] = useState<Namespace | null>(null);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
@@ -17,6 +74,7 @@ export default function Namespaces() {
   const [namespaceForm] = Form.useForm();
   const [promptForm] = Form.useForm();
   const [filterName, setFilterName] = useState<string>('');
+  const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
   const [editorContent, setEditorContent] = useState<string>('');
   const [editorPrompt, setEditorPrompt] = useState<Prompt | null>(null);
   const [showVersionList, setShowVersionList] = useState<boolean>(false);
@@ -167,26 +225,40 @@ export default function Namespaces() {
     <Page title="提示词管理">
       <Tabs
         activeKey={activeNamespaceId}
-        onChange={setActiveNamespaceId}
-        items={namespaces.map(ns => ({
-          key: ns.id,
-          label: ns.name,
-        }))}
-        style={{ marginBottom: 24 }}
-        tabBarExtraContent={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              namespaceForm.resetFields();
-              setEditingNamespace(null);
-              setNamespaceModalVisible(true);
-            }}
-          >
-            新增命名空间
-          </Button>
-        }
+        onChange={(key) => {
+          if (key === 'add_namespace') return;
+          setActiveNamespaceId(key);
+        }}
+        onTabClick={(key) => {
+          if (key === 'add_namespace') {
+            namespaceForm.resetFields();
+            setEditingNamespace(null);
+            setNamespaceModalVisible(true);
+          }
+        }}
+        items={[
+          ...namespaces.map(ns => ({
+            key: ns.id,
+            label: (
+              <NamespaceTabLabel
+                ns={ns}
+                onEdit={handleEditNamespace}
+                onDelete={handleDeleteNamespaceWithSwitch}
+              />
+            ),
+          })),
+          {
+            key: 'add_namespace',
+            label: <PlusOutlined />,
+          }
+        ]}
+        style={{ marginBottom: namespaces.find(ns => ns.id === activeNamespaceId)?.description ? 12 : 24 }}
       />
+      {namespaces.find(ns => ns.id === activeNamespaceId)?.description && (
+        <div style={{ marginBottom: 24, color: token.colorTextSecondary }}>
+          {namespaces.find(ns => ns.id === activeNamespaceId)?.description}
+        </div>
+      )}
       {activeNamespaceId && (
         <Card className="content-card">
           <Flex
@@ -197,10 +269,17 @@ export default function Namespaces() {
           >
             <Space>
               <Input
-                placeholder="搜索名称"
+                prefix={<SearchOutlined style={{ color: token.colorTextPlaceholder }} />}
+                placeholder="搜索提示词名称..."
                 value={filterName}
                 onChange={(e) => setFilterName(e.target.value)}
-                style={{ width: 200 }}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+                style={{ 
+                  width: isSearchFocused ? 360 : 120,
+                  transition: 'width 0.3s ease-in-out',
+                }}
+                size="large"
                 allowClear
               />
             </Space>

@@ -110,7 +110,8 @@ class Request {
   }
 
   get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return this.request({ ...config, url, method: 'GET' });
+    const params = { ...config?.params, _t: Date.now() };
+    return this.request({ ...config, params, url, method: 'GET' });
   }
 
   del<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {

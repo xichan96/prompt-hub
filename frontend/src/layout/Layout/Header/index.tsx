@@ -1,7 +1,9 @@
 import { useNavigate, useLocation } from 'react-router';
-import { useAuthStore } from '@/store';
+import { useState } from 'react';
+import { useAuthStore, useThemeStore } from '@/store';
 import { Button, Dropdown } from 'antd';
-import { UserOutlined, LogoutOutlined, FolderOutlined, SettingOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, SettingOutlined, KeyOutlined, SunOutlined, MoonOutlined } from '@ant-design/icons';
+import ChangePasswordModal from '@/components/User/ChangePasswordModal';
 import styles from './index.module.scss';
 
 export interface HeaderProps {
@@ -22,6 +24,8 @@ export default function Header(props: HeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
+  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -38,15 +42,7 @@ export default function Header(props: HeaderProps) {
     }
   };
 
-  const userMenuItems = [
-    {
-      key: 'namespaces',
-      label: '提示词',
-      icon: <FolderOutlined />,
-      onClick: () => handleNavigate('/namespaces'),
-      disabled: isActivePath('/namespaces'),
-    },
-  ];
+  const userMenuItems: any[] = [];
 
   if (user?.role === 'admin') {
     userMenuItems.push(
@@ -66,6 +62,13 @@ export default function Header(props: HeaderProps) {
       }
     );
   }
+
+  userMenuItems.push({
+    key: 'change-password',
+    label: '修改密码',
+    icon: <KeyOutlined />,
+    onClick: () => setChangePasswordModalVisible(true),
+  });
 
   userMenuItems.push({
     key: 'logout',
@@ -91,6 +94,12 @@ export default function Header(props: HeaderProps) {
         </div>
 
         <div className={styles.right}>
+          <Button
+            type="text"
+            icon={theme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+            onClick={toggleTheme}
+            style={{ marginRight: 8 }}
+          />
           {user && (
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <Button type="text" icon={<UserOutlined />}>
@@ -101,6 +110,10 @@ export default function Header(props: HeaderProps) {
           {extra}
         </div>
       </div>
+      <ChangePasswordModal
+        open={changePasswordModalVisible}
+        onCancel={() => setChangePasswordModalVisible(false)}
+      />
     </header >
   );
 }

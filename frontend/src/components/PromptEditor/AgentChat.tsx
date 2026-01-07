@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useImperativeHandle, forwardRef, Children, useCallback } from 'react';
  import { Button, Input, Avatar } from 'antd';
-import { ClearOutlined, CheckOutlined } from '@ant-design/icons';
+import { ClearOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
  import ReactMarkdown from 'react-markdown';
  import remarkGfm from 'remark-gfm';
  import rehypeHighlight from 'rehype-highlight';
@@ -11,8 +11,7 @@ import { useAutoApply } from '@/hooks/useAutoApply';
  import CodeReference from './CodeReference';
  import { CodeReferenceInfo } from './EditorArea';
  import InputToolbar from './InputToolbar';
- import styles from './index.module.scss';
- import 'highlight.js/styles/github-dark.css';
+import styles from './index.module.scss';
 
 interface AgentChatProps {
   editorAreaRef?: React.RefObject<{ 
@@ -230,7 +229,7 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, col
         )}
         <div className={styles.agentHeader}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Avatar size={24} style={{ backgroundColor: '#1890ff' }}>A</Avatar>
+            <Avatar size={24} style={{ backgroundColor: 'var(--message-user-bg)' }}>A</Avatar>
             <span className={styles.agentTitle}>agent</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -277,7 +276,7 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, col
                                   type="text"
                                   size="small"
                                   icon={<CheckOutlined />}
-                                  style={{ color: 'white', background: 'rgba(0,0,0,0.3)' }}
+                                  style={{ color: 'var(--text-color)', background: 'var(--code-bg)' }}
                                   onClick={() => {
                                     const ref = getCodeReference(index);
                                     editorAreaRef.current?.replaceCode(content, ref?.lineRange);

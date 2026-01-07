@@ -44,7 +44,7 @@ export default function CodeBlockActions({ content, onApply }: CodeBlockActionsP
     label: (
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span>{block.language || 'text'}</span>
-        <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px' }}>
+        <span style={{ color: 'var(--text-color-secondary)', fontSize: '12px' }}>
           ({block.content.length} 字符)
         </span>
       </div>

@@ -20,7 +20,7 @@ export default function InputToolbar({
   return (
     <div className={styles.inputToolbar}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ color: 'rgba(255, 255, 255, 0.45)', fontSize: '12px' }}>AutoEdit</span>
+        <span style={{ color: 'var(--text-color-secondary)', fontSize: '12px' }}>AutoEdit</span>
         {onToggleAutoApply && (
           <Switch
             checkedChildren=""
@@ -28,7 +28,7 @@ export default function InputToolbar({
             checked={autoApply}
             onChange={onToggleAutoApply}
             size="small"
-            style={{ backgroundColor: autoApply ? '#52c41a' : undefined }}
+            style={{ backgroundColor: autoApply ? 'var(--success-color)' : undefined }}
           />
         )}
       </div>

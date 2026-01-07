@@ -1,29 +1,110 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Button, Space, Flex, Popconfirm, Form, Input, Modal, TableColumnsType, Tabs } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, HistoryOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Space, Flex, Popconfirm, Form, Input, Modal, TableColumnsType, Tabs, Tooltip, Popover, theme } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, HistoryOutlined, SearchOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router';
 import { Prompt, CreatePromptRequest } from '@/apis/prompt';
-import { Namespace } from '@/apis/namespace';
+import { Namespace, CreateNamespaceRequest, UpdateNamespaceRequest } from '@/apis/namespace';
 import Page from '@/components/Page';
 import PromptEditor from '@/components/PromptEditor';
 import dayjs from 'dayjs';
 import { useNamespaceList, usePromptList } from '@/hooks';
 
+interface NamespaceTabLabelProps {
+  ns: Namespace;
+  onEdit: (ns: Namespace) => void;
+  onDelete: (id: string) => void;
+}
+
+const NamespaceTabLabel = ({ ns, onEdit, onDelete }: NamespaceTabLabelProps) => {
+  const content = (
+    <div onClick={(e) => e.stopPropagation()}>
+      <Space size={4}>
+        <Button
+          type="text"
+          size="small"
+          icon={<EditOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(ns);
+          }}
+        />
+        <Popconfirm
+          title="确定要删除这个命名空间吗？"
+          description="删除后无法恢复，且该命名空间下的所有提示词也将被删除。"
+          onConfirm={(e) => {
+            e?.stopPropagation();
+            onDelete(ns.id);
+          }}
+          onCancel={(e) => e?.stopPropagation()}
+          okText="确定"
+          cancelText="取消"
+        >
+          <Button
+            type="text"
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </Popconfirm>
+      </Space>
+    </div>
+  );
+
+  return (
+    <Popover
+      content={content}
+      trigger="hover"
+      placement="bottom"
+      overlayInnerStyle={{ padding: '4px' }}
+    >
+      <span className="namespace-tab-label" title={ns.description || '暂无描述'}>
+        {ns.name}
+      </span>
+    </Popover>
+  );
+};
+
 export default function NamespaceDetail() {
+  const { token } = theme.useToken();
   const { namespaceId } = useParams<{ namespaceId: string }>();
   const navigate = useNavigate();
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
+  const [editingNamespace, setEditingNamespace] = useState<Namespace | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [namespaceModalVisible, setNamespaceModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [namespaceForm] = Form.useForm();
   const [filterName, setFilterName] = useState<string>('');
+  const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
   const [editorContent, setEditorContent] = useState<string>('');
   const [editorPrompt, setEditorPrompt] = useState<Prompt | null>(null);
   const [showVersionList, setShowVersionList] = useState<boolean>(false);
 
-  const { namespaces } = useNamespaceList();
+  const { namespaces, handleUpdate: handleUpdateNamespace, handleDelete: handleDeleteNamespace } = useNamespaceList();
   const { prompts, loading, handleDelete, handleCreate, handleUpdate, handlePublish, loadPrompt } = usePromptList(namespaceId || '', filterName);
 
   const namespace = namespaceId ? namespaces.find(n => n.id === namespaceId) || null : null;
+
+  const handleEditNamespace = (record: Namespace) => {
+    setEditingNamespace(record);
+    namespaceForm.setFieldsValue({ ...record });
+    setNamespaceModalVisible(true);
+  };
+
+  const handleSubmitNamespace = async (values: CreateNamespaceRequest | UpdateNamespaceRequest) => {
+    if (editingNamespace) {
+      await handleUpdateNamespace(editingNamespace.id, values as UpdateNamespaceRequest);
+      setNamespaceModalVisible(false);
+      namespaceForm.resetFields();
+      setEditingNamespace(null);
+    }
+  };
+
+  const handleDeleteNamespaceWithRedirect = async (id: string) => {
+    await handleDeleteNamespace(id);
+    navigate('/namespaces');
+  };
 
   const handleEdit = async (record: Prompt) => {
     setEditorPrompt(record);
@@ -142,7 +223,13 @@ export default function NamespaceDetail() {
         onChange={handleTabChange}
         items={namespaces.map(ns => ({
           key: ns.id,
-          label: ns.name,
+          label: (
+            <NamespaceTabLabel
+              ns={ns}
+              onEdit={handleEditNamespace}
+              onDelete={handleDeleteNamespaceWithRedirect}
+            />
+          ),
         }))}
         style={{ marginBottom: 24 }}
       />
@@ -155,10 +242,17 @@ export default function NamespaceDetail() {
         >
           <Space>
             <Input
-              placeholder="搜索名称"
+              prefix={<SearchOutlined style={{ color: token.colorTextPlaceholder }} />}
+              placeholder="搜索提示词名称..."
               value={filterName}
               onChange={(e) => setFilterName(e.target.value)}
-              style={{ width: 200 }}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+              style={{ 
+                width: isSearchFocused ? 360 : 120,
+                transition: 'width 0.3s ease-in-out'
+              }}
+              size="large"
               allowClear
             />
           </Space>
@@ -268,6 +362,37 @@ export default function NamespaceDetail() {
             </Form>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        title="编辑命名空间"
+        open={namespaceModalVisible}
+        onCancel={() => {
+          setNamespaceModalVisible(false);
+          namespaceForm.resetFields();
+          setEditingNamespace(null);
+        }}
+        onOk={() => namespaceForm.submit()}
+      >
+        <Form
+          form={namespaceForm}
+          layout="vertical"
+          onFinish={handleSubmitNamespace}
+        >
+          <Form.Item
+            name="name"
+            label="名称"
+            rules={[{ required: true, message: '请输入名称' }]}
+          >
+            <Input placeholder="请输入名称" />
+          </Form.Item>
+          <Form.Item
+            name="description"
+            label="描述"
+          >
+            <Input.TextArea placeholder="请输入描述" rows={4} />
+          </Form.Item>
+        </Form>
       </Modal>
 
     </Page>

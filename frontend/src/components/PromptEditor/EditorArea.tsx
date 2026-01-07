@@ -3,6 +3,7 @@ import { Button } from 'antd';
 import { ConsoleSqlOutlined } from '@ant-design/icons';
 import Editor, { DiffEditor, OnMount, DiffOnMount } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
+import { useThemeStore } from '@/store';
 import styles from './index.module.scss';
 
 export interface ActionButton {
@@ -46,6 +47,7 @@ const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({
   onAddToChat,
   fileName = 'editor'
 }, ref) => {
+  const { theme } = useThemeStore();
   const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [selectedText, setSelectedText] = useState<string>('');
@@ -393,7 +395,7 @@ const replaceCode = useCallback((content: string, lineRange?: string) => {
           <Editor
             height="100%"
             language="markdown"
-            theme="vs-dark"
+            theme={theme === 'dark' ? 'vs-dark' : 'light'}
             value={content}
             onChange={(value) => onContentChange(value || '')}
             onMount={handleEditorMount}
