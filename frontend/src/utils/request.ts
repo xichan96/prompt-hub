@@ -89,6 +89,10 @@ class Request {
         if (err.response) {
           const { status, data } = err.response;
           if (status === 401) {
+            try {
+              const { logout } = useAuthStore.getState();
+              logout();
+            } catch {}
             toLoginPage();
           }
           else if (status === 403) {
@@ -134,4 +138,3 @@ class Request {
 const request = new Request();
 
 export { request, Request };
-

@@ -95,7 +95,7 @@ export default function PromptEditor({ prompt, content, onContentChange, onPubli
           editorAreaRef={editorAreaRef}
           collapsed={agentCollapsed}
           onToggleCollapsed={setAgentCollapsed}
-          chatId={prompt?.id || (prompt?.name ? `name:${prompt.name}` : undefined)}
+          chatId={prompt?.id ? `${namespaceId}:${prompt.id}` : (prompt?.name ? `${namespaceId}:${prompt.name}` : `${namespaceId}:draft`)}
         />
       </div>
       <PublishModal

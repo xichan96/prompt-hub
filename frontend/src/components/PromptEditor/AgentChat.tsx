@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useImperativeHandle, forwardRef, Children, useCallback } from 'react';
 import { Button, Input, Avatar } from 'antd';
-import { ClearOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { ClearOutlined, CheckOutlined, CloseOutlined, RobotOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -74,6 +74,7 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, col
     handleClearContext,
   } = useAgentChat({
     onAgentMessageComplete: handleAgentMessageComplete,
+    id: chatId,
   });
 
   const getCodeReference = useCallback((msgIndex: number) => {
@@ -231,8 +232,9 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, col
         )}
         <div className={styles.agentHeader}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Avatar size={24} style={{ backgroundColor: 'var(--message-user-bg)' }}>A</Avatar>
-            <span className={styles.agentTitle}>agent</span>
+            <Avatar size={24} style={{ backgroundColor: 'var(--message-user-bg)' }}>
+              <RobotOutlined style={{ fontSize: 16 }} />
+            </Avatar>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {messages.length > 0 && (
