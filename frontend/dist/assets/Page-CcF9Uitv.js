@@ -1,0 +1,1 @@
+import{v as e}from"./index-CEk4w4Ul.js";function d({title:s,description:a,children:r,extra:i}){return e.jsxs("div",{className:"fade-in",children:[s&&e.jsxs("div",{className:"page-header",children:[e.jsx("h1",{className:"page-title",children:s}),a&&e.jsx("p",{className:"page-description",children:a}),i&&e.jsx("div",{className:"page-extra",children:i})]}),r]})}export{d as P};

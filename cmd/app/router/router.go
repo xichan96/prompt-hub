@@ -1,6 +1,8 @@
 package router
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/xichan96/prompt-hub/cmd/app/handler"
@@ -68,11 +70,31 @@ func RegisterAPIRouter(r *gin.Engine) {
 			agent.POST("/chat", handler.AgentChatAPI)
 			agent.POST("/chat/stream", handler.AgentStreamChatAPI)
 		}
+
+		tools := api.Group("/tools", middleware.Auth())
+		{
+			tools.POST("/run_agent", handler.RunAgentToolAPI)
+			tools.GET("/prompts", handler.GetPromptListToolAPI)
+			tools.GET("/prompt", handler.GetPromptToolAPI)
+			tools.GET("/files", handler.ListSkillFilesToolAPI)
+			tools.GET("/file", handler.GetSkillFileToolAPI)
+		}
 	}
 
-	mcp := r.Group("/mcp")
+	mcp := r.Group("/mcp", middleware.Auth())
 	{
 		h := mcphandler.NewMcpHandler()
 		mcp.Any("/*path", gin.WrapH(h))
 	}
+
+	// Serve static files
+	r.Static("/assets", "./frontend/dist/assets")
+
+	// Serve index.html for non-API routes (SPA support)
+	r.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if !strings.HasPrefix(path, "/api") && !strings.HasPrefix(path, "/mcp") {
+			c.File("./frontend/dist/index.html")
+		}
+	})
 }

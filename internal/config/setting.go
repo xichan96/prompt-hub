@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/xichan96/prompt-hub/pkg/sql/mysql"
 )
@@ -15,11 +16,24 @@ type config struct {
 }
 
 func InitConfig() {
-	Config.Mysql = &mysql.Config{
-		Host:     "127.0.0.1",
-		Port:     3306,
-		User:     "root",
-		Password: "test@123",
-		Database: "prompt_hub",
+	portStr := getEnv("DB_PORT", "3306")
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		port = 3306
 	}
+
+	Config.Mysql = &mysql.Config{
+		Host:     getEnv("DB_HOST", "127.0.0.1"),
+		Port:     port,
+		User:     getEnv("DB_USER", "root"),
+		Password: getEnv("DB_PASSWORD", "test@123"),
+		Database: getEnv("DB_NAME", "prompt_hub"),
+	}
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }

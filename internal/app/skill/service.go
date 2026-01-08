@@ -19,6 +19,7 @@ type AppIer interface {
 	UpdateSkill(ctx context.Context, req *appdto.UpdateSkillReq) error
 	DeleteSkill(ctx context.Context, id string) error
 	GetSkills(ctx context.Context) ([]*appdto.Skill, error)
+	GetSkill(ctx context.Context, id string) (*appdto.Skill, error)
 }
 
 type app struct {
@@ -159,4 +160,19 @@ func (a *app) GetSkills(ctx context.Context) ([]*appdto.Skill, error) {
 		})
 	}
 	return result, nil
+}
+
+func (a *app) GetSkill(ctx context.Context, id string) (*appdto.Skill, error) {
+	skill, err := a.nps.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &appdto.Skill{
+		ID:          skill.ID,
+		Name:        skill.Name,
+		Description: skill.Description,
+		CreatedBy:   skill.CreatedBy,
+		CreatedAt:   skill.CreatedAt,
+		UpdatedAt:   skill.UpdatedAt,
+	}, nil
 }
