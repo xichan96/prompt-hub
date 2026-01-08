@@ -15,8 +15,10 @@ import (
 )
 
 type agentChatRequest struct {
-	Message   string `json:"message" binding:"required"`
-	SessionID string `json:"session_id"`
+	Message       string `json:"message" binding:"required"`
+	SessionID     string `json:"session_id"`
+	PromptContent string `json:"prompt_content"`
+	PromptConfig  string `json:"prompt_config"`
 }
 
 // AgentChatAPI        Agent聊天接口 godoc
@@ -49,7 +51,7 @@ func AgentChatAPI(c *gin.Context) {
 	req.SessionID = reqBody.SessionID
 	req.Message = reqBody.Message
 
-	engine, err := di.AgentApp.Engine(req.SessionID)
+	engine, err := di.AgentApp.Engine(req.SessionID, reqBody.PromptContent, reqBody.PromptConfig)
 	if err != nil {
 		gx.JSONErr(c, err)
 		return
@@ -158,7 +160,7 @@ func AgentStreamChatAPI(c *gin.Context) {
 	req.SessionID = reqBody.SessionID
 	req.Message = reqBody.Message
 
-	engine, err := di.AgentApp.Engine(req.SessionID)
+	engine, err := di.AgentApp.Engine(req.SessionID, reqBody.PromptContent, reqBody.PromptConfig)
 	if err != nil {
 		gx.JSONErr(c, err)
 		return

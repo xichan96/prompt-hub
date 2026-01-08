@@ -9,7 +9,7 @@ import (
 	"github.com/xichan96/prompt-hub/internal/appdto"
 )
 
-func (a *app) setupLLM() (types.LLMProvider, error) {
+func (a *app) setupLLM(promptConfig *PromptConfig) (types.LLMProvider, error) {
 	llmSetting, err := a.settingSrv.GetLLMSetting(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get LLM setting: %w", err)
@@ -17,15 +17,27 @@ func (a *app) setupLLM() (types.LLMProvider, error) {
 	if llmSetting == nil || llmSetting.LLMConfig == nil {
 		return nil, fmt.Errorf("LLM setting is nil")
 	}
-	llmCfg := llmSetting.LLMConfig
+	// Create a copy to avoid modifying global state
+	llmCfg := *llmSetting.LLMConfig
+
+	if promptConfig != nil && promptConfig.Model.Name != "" {
+		switch llmCfg.Provider {
+		case "openai":
+			llmCfg.OpenAI.Model = promptConfig.Model.Name
+		case "deepseek":
+			llmCfg.DeepSeek.Model = promptConfig.Model.Name
+		case "volce":
+			llmCfg.Volce.Model = promptConfig.Model.Name
+		}
+	}
 
 	switch llmCfg.Provider {
 	case "openai":
-		return a.initOpenAI(llmCfg)
+		return a.initOpenAI(&llmCfg)
 	case "deepseek":
-		return a.initDeepSeek(llmCfg)
+		return a.initDeepSeek(&llmCfg)
 	case "volce":
-		return a.initVolce(llmCfg)
+		return a.initVolce(&llmCfg)
 	default:
 		return nil, fmt.Errorf("unsupported LLM provider: %s", llmCfg.Provider)
 	}

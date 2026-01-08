@@ -10,7 +10,7 @@ interface UsePromptEditorProps {
   prompt: Prompt | null;
   content: string;
   onPublish?: () => void;
-  namespaceId: string;
+  skillId: string;
   promptId?: string;
 }
 
@@ -18,10 +18,11 @@ export function usePromptEditor({
   prompt,
   content,
   onPublish,
-  namespaceId,
+  skillId,
   promptId,
 }: UsePromptEditorProps) {
   const { t } = useI18n();
+
   const [selectedVersion, setSelectedVersion] = useState<VersionType>('diff');
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | undefined>();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -29,29 +30,32 @@ export function usePromptEditor({
   const [publishDescription, setPublishDescription] = useState('');
   const [agentCollapsed, setAgentCollapsed] = useState(false);
   
+  // New state for Tabs
+  const [activeTab, setActiveTab] = useState<'content' | 'files'>('content');
+
   const editorAreaRef = useRef<EditorAreaRef>(null);
   const agentChatRef = useRef<AgentChatRef>(null);
   const lastSavedContentRef = useRef<string>('');
 
-  const { publishing, saving, handleSave, handlePublish } = usePromptOperations(namespaceId, promptId);
-  const { publishedContent, hasPublished, loadPublishedContent } = usePromptVersions(namespaceId, prompt?.name);
+  const { publishing, saving, handleSave, handlePublish } = usePromptOperations(skillId, promptId);
+  const { publishedContent, hasPublished, loadPublishedContent } = usePromptVersions(skillId, prompt?.name);
   const { 
     historyContent, 
     currentVersionContent, 
     loadHistoryContent, 
     loadCurrentVersionContent, 
     clearVersionContent 
-  } = usePromptContent(namespaceId);
+  } = usePromptContent(skillId);
 
   // Initial load
   useEffect(() => {
-    if (namespaceId && prompt?.name) {
+    if (skillId && prompt?.name) {
       setSelectedVersion('diff');
       setSelectedHistoryId(undefined);
       clearVersionContent();
       loadPublishedContent();
     }
-  }, [namespaceId, prompt?.name, promptId, loadPublishedContent, clearVersionContent]);
+  }, [skillId, prompt?.name, promptId, loadPublishedContent, clearVersionContent]);
 
   // Auto-save
   useEffect(() => {
@@ -61,12 +65,13 @@ export function usePromptEditor({
     const intervalId = setInterval(async () => {
       const current = (content || '').trim();
       const last = (lastSavedContentRef.current || '').trim();
+      
       if (!current || current === last) return;
       
-      const success = await handleSave(content, false);
+      const success = await handleSave(content, undefined, false); // Update handleSave signature later
       if (success) {
         lastSavedContentRef.current = content;
-        if (selectedVersion === 'diff' && namespaceId && prompt?.name) {
+        if (selectedVersion === 'diff' && skillId && prompt?.name) {
           await loadPublishedContent();
         }
       }
@@ -75,14 +80,16 @@ export function usePromptEditor({
     return () => {
       clearInterval(intervalId);
     };
-  }, [promptId, selectedVersion, content, handleSave, namespaceId, prompt?.name, loadPublishedContent]);
+  }, [promptId, selectedVersion, content, handleSave, skillId, prompt?.name, loadPublishedContent]);
 
   const onSave = useCallback(async () => {
-    const success = await handleSave(content);
-    if (success && selectedVersion === 'diff' && namespaceId && prompt?.name) {
-      await loadPublishedContent();
+    const success = await handleSave(content); // Update handleSave signature later
+    if (success) {
+        if (selectedVersion === 'diff' && skillId && prompt?.name) {
+            await loadPublishedContent();
+        }
     }
-  }, [handleSave, content, selectedVersion, namespaceId, prompt?.name, loadPublishedContent]);
+  }, [handleSave, content, selectedVersion, skillId, prompt?.name, loadPublishedContent]);
 
   const onPublishClick = useCallback(() => {
     setPublishDescription(prompt?.description || '');
@@ -105,7 +112,7 @@ export function usePromptEditor({
   const handleTitleClick = async () => {
     setSelectedVersion('diff');
     setSelectedHistoryId(undefined);
-    if (namespaceId && prompt?.name) {
+    if (skillId && prompt?.name) {
       await loadPublishedContent();
     }
   };
@@ -114,7 +121,7 @@ export function usePromptEditor({
     setSelectedVersion(version);
     if (version === 'diff') {
       setSelectedHistoryId(historyId);
-      if (namespaceId && prompt?.name) {
+      if (skillId && prompt?.name) {
         await loadPublishedContent();
       }
     } else if (version === 'history' && historyId) {
@@ -170,9 +177,12 @@ export function usePromptEditor({
     setPublishModalVisible,
     agentCollapsed,
     setAgentCollapsed,
+    activeTab,
+    setActiveTab,
     editorAreaRef,
     agentChatRef,
     publishing,
+    saving,
     hasPublished,
     publishedContent,
     displayContent,
@@ -181,5 +191,6 @@ export function usePromptEditor({
     handleVersionChange,
     onPublishConfirm,
     handleAddToChat,
+    onSave,
   };
 }

@@ -45,7 +45,8 @@ func MigrateTable() {
 		&model.Prompt{},
 		&model.Setting{},
 		&model.User{},
-		&model.Namespace{},
+		&model.Skill{},
+		&model.SkillFile{},
 	)
 }
 

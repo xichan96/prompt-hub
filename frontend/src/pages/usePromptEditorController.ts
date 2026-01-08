@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router';
 import { Prompt } from '@/apis/prompt';
 
 export function usePromptEditorController() {
-  const { namespaceId, promptId } = useParams<{ namespaceId: string; promptId: string }>();
+  const { skillId, promptId } = useParams<{ skillId: string; promptId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const [prompt, setPrompt] = useState<Prompt | null>(null);
@@ -22,7 +22,7 @@ export function usePromptEditorController() {
   }, [location.state, navigate]);
 
   return {
-    namespaceId,
+    skillId,
     promptId,
     prompt,
     content,

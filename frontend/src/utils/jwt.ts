@@ -14,7 +14,9 @@ export function parseJWT(token: string): any {
   }
 }
 
-export function getUserInfoFromToken(token: string): { id: string; username: string; role: string } | null {
+export type UserRole = 'admin' | 'user';
+
+export function getUserInfoFromToken(token: string): { id: string; username: string; role: UserRole } | null {
   try {
     const decoded = parseJWT(token);
     if (decoded && decoded.data) {
@@ -22,7 +24,7 @@ export function getUserInfoFromToken(token: string): { id: string; username: str
       return {
         id: data.id || '',
         username: data.username || '',
-        role: data.role || '',
+        role: (data.role as UserRole) || 'user',
       };
     }
     return null;

@@ -12,44 +12,44 @@ import {
   UpdatePromptRequest 
 } from '@/apis/prompt';
 
-export function usePromptList(namespaceId: string, filterName?: string) {
+export function usePromptList(skillId: string, filterName?: string) {
   const [loading, setLoading] = useState(false);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
 
   const fetchPrompts = useCallback(async () => {
-    if (!namespaceId) return;
+    if (!skillId) return;
     try {
       setLoading(true);
       const params: { name?: string; status?: string } = { status: 'draft' };
       if (filterName) params.name = filterName;
-      const res = await getPromptList(namespaceId, params);
+      const res = await getPromptList(skillId, params);
       setPrompts(res);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
-  }, [namespaceId, filterName]);
+  }, [skillId, filterName]);
 
   useEffect(() => {
     fetchPrompts();
   }, [fetchPrompts]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!namespaceId) return;
+    if (!skillId) return;
     try {
-      await deletePrompt(namespaceId, id);
+      await deletePrompt(skillId, id);
       message.success('删除成功');
       fetchPrompts();
     } catch (error) {
       message.error('删除失败');
     }
-  }, [namespaceId, fetchPrompts]);
+  }, [skillId, fetchPrompts]);
 
   const handleCreate = useCallback(async (values: CreatePromptRequest) => {
-    if (!namespaceId) return;
+    if (!skillId) return;
     try {
-      await createPrompt(namespaceId, values);
+      await createPrompt(skillId, values);
       message.success('创建成功');
       fetchPrompts();
       return true;
@@ -57,14 +57,15 @@ export function usePromptList(namespaceId: string, filterName?: string) {
       message.error('创建失败');
       return false;
     }
-  }, [namespaceId, fetchPrompts]);
+  }, [skillId, fetchPrompts]);
 
-  const handleUpdate = useCallback(async (id: string, content: string) => {
-    if (!namespaceId) return;
+  const handleUpdate = useCallback(async (id: string, content: string, config?: string) => {
+    if (!skillId) return;
     try {
-      await updatePrompt(namespaceId, id, { 
+      await updatePrompt(skillId, id, { 
         id,
-        content 
+        content,
+        config
       });
       message.success('更新成功');
       fetchPrompts();
@@ -73,12 +74,12 @@ export function usePromptList(namespaceId: string, filterName?: string) {
       message.error('更新失败');
       return false;
     }
-  }, [namespaceId, fetchPrompts]);
+  }, [skillId, fetchPrompts]);
 
   const handlePublish = useCallback(async (id: string, description?: string) => {
-    if (!namespaceId) return;
+    if (!skillId) return;
     try {
-      await publishPrompt(namespaceId, id, description);
+      await publishPrompt(skillId, id, description);
       message.success('发布成功');
       fetchPrompts();
       return true;
@@ -86,18 +87,18 @@ export function usePromptList(namespaceId: string, filterName?: string) {
       message.error('发布失败');
       return false;
     }
-  }, [namespaceId, fetchPrompts]);
+  }, [skillId, fetchPrompts]);
 
   const loadPrompt = useCallback(async (id: string): Promise<Prompt | null> => {
-    if (!namespaceId) return null;
+    if (!skillId) return null;
     try {
-      const data = await getPrompt(namespaceId, id);
+      const data = await getPrompt(skillId, id);
       return data;
     } catch (error) {
       message.error('加载提示词失败');
       return null;
     }
-  }, [namespaceId]);
+  }, [skillId]);
 
   return {
     prompts,

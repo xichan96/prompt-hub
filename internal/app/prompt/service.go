@@ -19,7 +19,7 @@ type AppIer interface {
 	PublishPrompt(ctx context.Context, req *appdto.PublishPromptReq) error
 	DeletePrompt(ctx context.Context, req *appdto.DeletePromptReq) error
 	GetPrompt(ctx context.Context, req *appdto.GetPromptReq) (*appdto.Prompt, error)
-	GetPromptList(ctx context.Context, namespaceID, name, status string) ([]*appdto.Prompt, error)
+	GetPromptList(ctx context.Context, skillID, name, status string) ([]*appdto.Prompt, error)
 }
 
 type app struct {
@@ -35,17 +35,21 @@ func NewApp(pp persist.PromptPersistIer) AppIer {
 func (a *app) CreatePrompt(ctx context.Context, req *appdto.CreatePromptDraftReq) (string, error) {
 	// 查询是否存在
 	options := make([]func(*gorm.DB) *gorm.DB, 0)
-	options = append(options, a.pp.Where(a.pp.F().NamespaceID.Eq(req.NamespaceID), a.pp.F().Name.Eq(req.Name)))
+	options = append(options, a.pp.Where(a.pp.F().SkillID.Eq(req.SkillID), a.pp.F().Status.Eq(appdto.PromptStatusDraft)))
 	if _, err := a.pp.GetBy(ctx, options...); err == nil {
-		return "", errors.New("prompt already exists")
+		return "", errors.New("draft prompt already exists for this skill")
+	}
+	if strings.TrimSpace(req.Content) == "" {
+		req.Content = defaultAgentSkillsTemplate(req.Name)
 	}
 	// 如果不存在则插入
 	nowTime := time.Now()
 	prompt := &model.Prompt{
-		NamespaceID: req.NamespaceID,
+		SkillID:     req.SkillID,
 		Name:        req.Name,
 		Description: req.Description,
 		Content:     req.Content,
+		Config:      req.Config,
 		Status:      appdto.PromptStatusDraft,
 		CreatedBy:   cctx.GetUserID[string](ctx),
 		CreatedAt:   nowTime,
@@ -68,6 +72,9 @@ func (a *app) UpdatePrompt(ctx context.Context, req *appdto.UpdatePromptDraftReq
 	if prompt.Content != req.Content {
 		prompt.Content = req.Content
 	}
+	if prompt.Config != req.Config {
+		prompt.Config = req.Config
+	}
 	prompt.UpdatedAt = nowTime
 	return a.pp.Update(ctx, prompt)
 }
@@ -82,7 +89,7 @@ func (a *app) PublishPrompt(ctx context.Context, req *appdto.PublishPromptReq) e
 
 	publishedOptions := make([]func(*gorm.DB) *gorm.DB, 0)
 	publishedOptions = append(publishedOptions, a.pp.Where(
-		a.pp.F().NamespaceID.Eq(draft.NamespaceID),
+		a.pp.F().SkillID.Eq(draft.SkillID),
 		a.pp.F().Name.Eq(draft.Name),
 		a.pp.F().Status.Eq(appdto.PromptStatusPublished),
 	))
@@ -110,10 +117,11 @@ func (a *app) PublishPrompt(ctx context.Context, req *appdto.PublishPromptReq) e
 		}
 	}
 	newPublished := &model.Prompt{
-		NamespaceID: draft.NamespaceID,
+		SkillID:     draft.SkillID,
 		Name:        draft.Name,
 		Description: description,
 		Content:     draft.Content,
+		Config:      draft.Config,
 		Status:      appdto.PromptStatusPublished,
 		CreatedBy:   draft.CreatedBy,
 		CreatedAt:   nowTime,
@@ -128,7 +136,7 @@ func (a *app) DeletePrompt(ctx context.Context, req *appdto.DeletePromptReq) err
 	if req.ID != "" {
 		options = append(options, a.pp.Where(a.pp.F().ID.Eq(req.ID)))
 	} else {
-		options = append(options, a.pp.Where(a.pp.F().NamespaceID.Eq(req.NamespaceID), a.pp.F().Name.Eq(req.Name)))
+		options = append(options, a.pp.Where(a.pp.F().SkillID.Eq(req.SkillID), a.pp.F().Name.Eq(req.Name)))
 	}
 	return a.pp.DeleteBatch(ctx, options...)
 }
@@ -141,7 +149,7 @@ func (a *app) GetPrompt(ctx context.Context, req *appdto.GetPromptReq) (*appdto.
 	} else {
 		options := make([]func(*gorm.DB) *gorm.DB, 0)
 		options = append(options, a.pp.Where(
-			a.pp.F().NamespaceID.Eq(req.NamespaceID),
+			a.pp.F().SkillID.Eq(req.SkillID),
 			a.pp.F().Name.Eq(req.Name),
 		))
 		if req.Status != "" {
@@ -155,9 +163,11 @@ func (a *app) GetPrompt(ctx context.Context, req *appdto.GetPromptReq) (*appdto.
 	return toAppDTO(prompt), nil
 }
 
-func (a *app) GetPromptList(ctx context.Context, namespaceID, name, status string) ([]*appdto.Prompt, error) {
+func (a *app) GetPromptList(ctx context.Context, skillID, name, status string) ([]*appdto.Prompt, error) {
 	options := make([]func(*gorm.DB) *gorm.DB, 0)
-	options = append(options, a.pp.Where(a.pp.F().NamespaceID.Eq(namespaceID)))
+	if strings.TrimSpace(skillID) != "" {
+		options = append(options, a.pp.Where(a.pp.F().SkillID.Eq(skillID)))
+	}
 	if len(name) > 0 {
 		options = append(options, a.pp.Where(a.pp.F().Name.Like("%"+name+"%")))
 	}
@@ -189,13 +199,45 @@ func (a *app) GetPromptList(ctx context.Context, namespaceID, name, status strin
 func toAppDTO(p *model.Prompt) *appdto.Prompt {
 	return &appdto.Prompt{
 		ID:          p.ID,
-		NamespaceID: p.NamespaceID,
+		SkillID:     p.SkillID,
 		Name:        p.Name,
 		Description: p.Description,
 		Content:     p.Content,
+		Config:      p.Config,
 		Status:      p.Status,
 		CreatedBy:   p.CreatedBy,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
 	}
+}
+
+func defaultAgentSkillsTemplate(name string) string {
+	if strings.TrimSpace(name) == "" {
+		name = "Agent"
+	}
+	return "# 角色\n" +
+		"你是「" + name + "」技能的智能体，负责针对用户目标进行分析、拆解与执行，并在必要时进行澄清与校验。\n\n" +
+		"# 渐进式披露原则\n" +
+		"- 先理解与澄清需求，再逐步展开细节与方案\n" +
+		"- 每一步都提供可验证的中间结果与理由\n" +
+		"- 在关键节点请求确认，避免过度一次性输出\n" +
+		"- 根据反馈逐步加深，控制信息密度与节奏\n\n" +
+		"# 技能清单\n" +
+		"- 需求澄清与边界识别\n" +
+		"- 任务拆解与路径规划\n" +
+		"- 工具选择与调用（如 MCP 等）\n" +
+		"- 内容/代码生成与修改\n" +
+		"- 结果自检与误差控制\n" +
+		"- 总结与下一步建议\n\n" +
+		"# 工作流程\n" +
+		"1. 读取输入并判断是否需要澄清，给出最少必要的提问\n" +
+		"2. 识别约束与目标，产出简短的执行计划（1-3 步）\n" +
+		"3. 逐步执行：每步先解释选择，再给出结果与可验证点\n" +
+		"4. 必要时调用工具，并说明调用目的与预期\n" +
+		"5. 汇总当前成果，提出可选下一步与取舍建议\n\n" +
+		"# 输出格式\n" +
+		"- 目标与假设\n" +
+		"- 步骤与理由（简洁）\n" +
+		"- 结果与校验点\n" +
+		"- 下一步选项（优先级）\n"
 }

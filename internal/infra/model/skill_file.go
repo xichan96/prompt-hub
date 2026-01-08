@@ -7,37 +7,33 @@ import (
 	"gorm.io/gen/field"
 )
 
-const TablePrompt = "prompt"
+const TableSkillFile = "skill_file"
 
-var PromptFM = sql.NewGlobalFieldMetaMapping(Prompt{}, PromptFieldMeta{})
+var SkillFileFM = sql.NewGlobalFieldMetaMapping(SkillFile{}, SkillFileFieldMeta{})
 
-type Prompt struct {
+type SkillFile struct {
 	ID          string    `json:"id" gorm:"column:id;type:varchar(36);primaryKey;comment:id"`
-	Status      string    `json:"status" gorm:"column:status;type:varchar(36);not null;comment:status"` // draft, published, archived
 	SkillID     string    `json:"skill_id" gorm:"column:skill_id;type:varchar(36);not null;comment:skill_id"`
-	Name        string    `json:"name" gorm:"column:name;type:varchar(255);not null;comment:name"`
-	Description string    `json:"description" gorm:"column:description;type:text;not null;comment:description"`
+	Name        string    `json:"name" gorm:"column:name;type:varchar(255);not null;comment:name (file path)"`
+	Description string    `json:"description" gorm:"column:description;type:text;comment:description"`
 	Content     string    `json:"content" gorm:"column:content;type:text;not null;comment:content"`
-	Config      string    `json:"config" gorm:"column:config;type:text;comment:config"` // json: allowed_tools, model, etc.
 	CreatedBy   string    `json:"created_by" gorm:"column:created_by;type:varchar(36);not null;comment:created_by"`
 	CreatedAt   time.Time `json:"created_at" gorm:"column:created_at;type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt   time.Time `json:"updated_at" gorm:"column:updated_at;type:datetime;not null;default:CURRENT_TIMESTAMP"`
 }
 
-func (Prompt) TableName() string {
-	return TablePrompt
+func (SkillFile) TableName() string {
+	return TableSkillFile
 }
 
-type PromptFieldMeta struct {
+type SkillFileFieldMeta struct {
 	sql.CTable
 	ALL         field.Asterisk
 	ID          field.String
-	Status      field.String
 	SkillID     field.String
 	Name        field.String
 	Description field.String
 	Content     field.String
-	Config      field.String
 	CreatedBy   field.String
 	CreatedAt   field.Time
 	UpdatedAt   field.Time

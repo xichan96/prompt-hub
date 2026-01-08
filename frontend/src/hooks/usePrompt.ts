@@ -2,17 +2,18 @@ import { useState, useCallback } from 'react';
 import { message } from 'antd';
 import { publishPrompt, updatePrompt, getPrompt, getPromptList, Prompt } from '@/apis/prompt';
 
-export function usePromptOperations(namespaceId: string, promptId?: string) {
+export function usePromptOperations(skillId: string, promptId?: string) {
   const [publishing, setPublishing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const handleSave = useCallback(async (content: string, showSuccessMessage = true) => {
-    if (!namespaceId || !promptId) return;
+  const handleSave = useCallback(async (content: string, config?: string, showSuccessMessage = true) => {
+    if (!skillId || !promptId) return;
     try {
       setSaving(true);
-      await updatePrompt(namespaceId, promptId, {
+      await updatePrompt(skillId, promptId, {
         id: promptId,
-        content: content
+        content: content,
+        config: config
       });
       if (showSuccessMessage) {
         message.success('保存成功');
@@ -23,13 +24,13 @@ export function usePromptOperations(namespaceId: string, promptId?: string) {
     } finally {
       setSaving(false);
     }
-  }, [namespaceId, promptId]);
+  }, [skillId, promptId]);
 
   const handlePublish = useCallback(async (description?: string) => {
-    if (!namespaceId || !promptId) return;
+    if (!skillId || !promptId) return;
     try {
       setPublishing(true);
-      await publishPrompt(namespaceId, promptId, description);
+      await publishPrompt(skillId, promptId, description);
       message.success('发布成功');
       return true;
     } catch (error) {
@@ -37,7 +38,7 @@ export function usePromptOperations(namespaceId: string, promptId?: string) {
     } finally {
       setPublishing(false);
     }
-  }, [namespaceId, promptId]);
+  }, [skillId, promptId]);
 
   return {
     publishing,
@@ -47,7 +48,7 @@ export function usePromptOperations(namespaceId: string, promptId?: string) {
   };
 }
 
-export function usePromptVersions(namespaceId: string, promptName?: string) {
+export function usePromptVersions(skillId: string, promptName?: string) {
   const [publishedContent, setPublishedContent] = useState<string>('');
   const [hasPublished, setHasPublished] = useState(false);
   const [loadingDiff, setLoadingDiff] = useState(false);
@@ -55,15 +56,15 @@ export function usePromptVersions(namespaceId: string, promptName?: string) {
   const lastFetchKeyRef = useState<{ key: string }>(() => ({ key: '' }))[0];
 
   const loadPublishedContent = useCallback(async (opts?: { force?: boolean }) => {
-    if (!namespaceId || !promptName) return;
+    if (!skillId || !promptName) return;
     try {
-      const fetchKey = `${namespaceId}|${promptName}`;
+      const fetchKey = `${skillId}|${promptName}`;
       if (!opts?.force && lastFetchKeyRef.key === fetchKey) {
         return;
       }
       lastFetchKeyRef.key = fetchKey;
       setLoadingDiff(true);
-      const prompts = await getPromptList(namespaceId, { name: promptName, status: 'published,draft' });
+      const prompts = await getPromptList(skillId, { name: promptName, status: 'published,draft' });
       const publishedList = prompts.filter(p => p.status === 'published');
       const draftList = prompts.filter(p => p.status === 'draft');
       const latestPublished = publishedList
@@ -85,7 +86,7 @@ export function usePromptVersions(namespaceId: string, promptName?: string) {
     } finally {
       setLoadingDiff(false);
     }
-  }, [namespaceId, promptName, lastFetchKeyRef]);
+  }, [skillId, promptName, lastFetchKeyRef]);
 
   return {
     publishedContent,
@@ -96,29 +97,29 @@ export function usePromptVersions(namespaceId: string, promptName?: string) {
   };
 }
 
-export function usePromptContent(namespaceId: string) {
+export function usePromptContent(skillId: string) {
   const [historyContent, setHistoryContent] = useState<string>('');
   const [currentVersionContent, setCurrentVersionContent] = useState<string>('');
 
   const loadHistoryContent = useCallback(async (historyId: string) => {
-    if (!namespaceId) return;
+    if (!skillId) return;
     try {
-      const historyPrompt = await getPrompt(namespaceId, historyId);
+      const historyPrompt = await getPrompt(skillId, historyId);
       setHistoryContent(historyPrompt.content);
     } catch (error) {
       setHistoryContent('');
     }
-  }, [namespaceId]);
+  }, [skillId]);
 
   const loadCurrentVersionContent = useCallback(async (versionId: string) => {
-    if (!namespaceId) return;
+    if (!skillId) return;
     try {
-      const currentPrompt = await getPrompt(namespaceId, versionId);
+      const currentPrompt = await getPrompt(skillId, versionId);
       setCurrentVersionContent(currentPrompt.content);
     } catch (error) {
       setCurrentVersionContent('');
     }
-  }, [namespaceId]);
+  }, [skillId]);
 
   const clearVersionContent = useCallback(() => {
     setHistoryContent('');

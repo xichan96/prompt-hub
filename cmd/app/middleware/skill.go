@@ -8,10 +8,10 @@ import (
 	"github.com/xichan96/prompt-hub/pkg/web/gx"
 )
 
-func NamespaceAccessMiddleware() gin.HandlerFunc {
+func SkillAccessMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		namespaceID := c.Param("namespace_id")
-		if len(namespaceID) == 0 {
+		skillID := c.Param("skill_id")
+		if len(skillID) == 0 {
 			c.Abort()
 			gx.JSONErr(c, ec.BadParams)
 			return
@@ -24,15 +24,15 @@ func NamespaceAccessMiddleware() gin.HandlerFunc {
 		}
 
 		userID := cctx.GetUserID[string](c)
-		nps := persist.NewNamespacePersist()
-		namespace, err := nps.GetByID(c, namespaceID)
+		nps := persist.NewSkillPersist()
+		skill, err := nps.GetByID(c, skillID)
 		if err != nil {
 			c.Abort()
 			gx.JSONErr(c, ec.NoFound)
 			return
 		}
 
-		if namespace.CreatedBy != userID {
+		if skill.CreatedBy != userID {
 			c.Abort()
 			gx.JSONErr(c, ec.Forbidden)
 			return

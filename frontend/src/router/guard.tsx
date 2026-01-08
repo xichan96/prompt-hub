@@ -32,6 +32,6 @@ export const RoleBasedRedirect = () => {
     return <Navigate to="/login" replace />;
   }
   
-  return <Navigate to="/namespaces" replace />;
+  return <Navigate to="/skills" replace />;
 };
 

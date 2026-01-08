@@ -7,7 +7,7 @@ import { useI18n } from '@/hooks/useI18n';
 interface VersionListProps {
   selectedVersion: VersionType;
   onVersionChange: (version: VersionType, promptId?: string) => void;
-  namespaceId: string;
+  skillId: string;
   promptName?: string;
   currentPromptId?: string;
   selectedHistoryId?: string;
@@ -17,7 +17,7 @@ interface VersionListProps {
 export default function VersionList({ 
   selectedVersion, 
   onVersionChange, 
-  namespaceId,
+  skillId,
   promptName,
   currentPromptId,
   selectedHistoryId,
@@ -29,12 +29,12 @@ export default function VersionList({
   const { t, locale } = useI18n();
 
   useEffect(() => {
-    if (!namespaceId || !promptName) {
+    if (!skillId || !promptName) {
       setVersions([]);
       return;
     }
     
-    const fetchKey = `${namespaceId}|${promptName}|${refreshTrigger ?? 0}`;
+    const fetchKey = `${skillId}|${promptName}|${refreshTrigger ?? 0}`;
     if (lastFetchKeyRef.current === fetchKey) {
       return;
     }
@@ -43,7 +43,7 @@ export default function VersionList({
     const fetchVersions = async () => {
       try {
         setLoading(true);
-        const prompts = await getPromptList(namespaceId, { name: promptName, status: 'archived' });
+        const prompts = await getPromptList(skillId, { name: promptName, status: 'archived' });
         
         const versionItems: VersionItem[] = [];
         
@@ -69,7 +69,7 @@ export default function VersionList({
     };
 
     fetchVersions();
-  }, [namespaceId, promptName, refreshTrigger]);
+  }, [skillId, promptName, refreshTrigger]);
 
   const handleVersionClick = (version: VersionItem) => {
     if (version.type === 'history' && selectedVersion === 'history' && version.id === selectedHistoryId) {

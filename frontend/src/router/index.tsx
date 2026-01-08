@@ -7,8 +7,8 @@ import { lazy, Suspense } from 'react';
 import { PageLoading } from '@/components/Loading';
 import AppLayout from '@/layout/AppLayout';
 
-const Namespaces = lazy(() => import('@/pages/Namespaces'));
-const NamespaceDetail = lazy(() => import('@/pages/NamespaceDetail'));
+const Skills = lazy(() => import('@/pages/Skills'));
+const SkillDetail = lazy(() => import('@/pages/SkillDetail'));
 const PromptEditor = lazy(() => import('@/pages/PromptEditor'));
 const Users = lazy(() => import('@/pages/Users'));
 const Settings = lazy(() => import('@/pages/Settings'));
@@ -22,7 +22,7 @@ export const router = createBrowserRouter([
         element: <RoleBasedRedirect />,
       },
       {
-        path: 'namespaces',
+        path: 'skills',
         element: (
           <ProtectedRoute>
             <Suspense fallback={<PageLoading />}>
@@ -35,22 +35,22 @@ export const router = createBrowserRouter([
             index: true,
             element: (
               <Suspense fallback={<PageLoading />}>
-                <Namespaces />
+                <Skills />
               </Suspense>
             ),
           },
           {
-            path: ':namespaceId',
+            path: ':skillId',
             element: (
               <Suspense fallback={<PageLoading />}>
-                <NamespaceDetail />
+                <SkillDetail />
               </Suspense>
             ),
           },
         ],
       },
       {
-        path: 'namespaces/:namespaceId/prompts/:promptId/edit',
+        path: 'skills/:skillId/prompts/:promptId/edit',
         element: (
           <ProtectedRoute>
             <Suspense fallback={<PageLoading />}>
@@ -118,4 +118,3 @@ export const router = createBrowserRouter([
     element: <NotFound />,
   }
 ]);
-

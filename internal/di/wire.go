@@ -6,9 +6,10 @@ package di
 import (
 	"github.com/google/wire"
 	"github.com/xichan96/prompt-hub/internal/app/agent"
-	"github.com/xichan96/prompt-hub/internal/app/namespace"
 	"github.com/xichan96/prompt-hub/internal/app/prompt"
 	"github.com/xichan96/prompt-hub/internal/app/setting"
+	"github.com/xichan96/prompt-hub/internal/app/skill"
+	"github.com/xichan96/prompt-hub/internal/app/skillfile"
 	"github.com/xichan96/prompt-hub/internal/app/user"
 	"github.com/xichan96/prompt-hub/internal/infra/persist"
 )
@@ -31,12 +32,23 @@ func NewUserApp() user.AppIer {
 	))
 }
 
-var NamespaceApp = NewNamespaceApp()
+var SkillApp = NewSkillApp()
 
-func NewNamespaceApp() namespace.AppIer {
+func NewSkillApp() skill.AppIer {
 	panic(wire.Build(
-		persist.NewNamespacePersist,
-		namespace.NewApp,
+		persist.NewSkillPersist,
+		persist.NewPromptPersist,
+		persist.NewSkillFilePersist,
+		skill.NewApp,
+	))
+}
+
+var SkillFileApp = NewSkillFileApp()
+
+func NewSkillFileApp() skillfile.AppIer {
+	panic(wire.Build(
+		persist.NewSkillFilePersist,
+		skillfile.NewApp,
 	))
 }
 

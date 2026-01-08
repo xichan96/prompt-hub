@@ -12,9 +12,9 @@ type UserListResponse struct {
 	Data []User `json:"data,omitempty"`
 }
 
-type NamespaceListResponse struct {
+type SkillListResponse struct {
 	*ec.ErrorCode
-	Data []Namespace `json:"data,omitempty"`
+	Data []Skill `json:"data,omitempty"`
 }
 
 type PromptResponse struct {

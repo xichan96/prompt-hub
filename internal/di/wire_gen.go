@@ -8,9 +8,10 @@ package di
 
 import (
 	"github.com/xichan96/prompt-hub/internal/app/agent"
-	"github.com/xichan96/prompt-hub/internal/app/namespace"
 	"github.com/xichan96/prompt-hub/internal/app/prompt"
 	"github.com/xichan96/prompt-hub/internal/app/setting"
+	"github.com/xichan96/prompt-hub/internal/app/skill"
+	"github.com/xichan96/prompt-hub/internal/app/skillfile"
 	"github.com/xichan96/prompt-hub/internal/app/user"
 	"github.com/xichan96/prompt-hub/internal/infra/persist"
 )
@@ -29,9 +30,17 @@ func NewUserApp() user.AppIer {
 	return appIer
 }
 
-func NewNamespaceApp() namespace.AppIer {
-	namespacePersistIer := persist.NewNamespacePersist()
-	appIer := namespace.NewApp(namespacePersistIer)
+func NewSkillApp() skill.AppIer {
+	skillPersistIer := persist.NewSkillPersist()
+	promptPersistIer := persist.NewPromptPersist()
+	skillFilePersistIer := persist.NewSkillFilePersist()
+	appIer := skill.NewApp(skillPersistIer, promptPersistIer, skillFilePersistIer)
+	return appIer
+}
+
+func NewSkillFileApp() skillfile.AppIer {
+	skillFilePersistIer := persist.NewSkillFilePersist()
+	appIer := skillfile.NewApp(skillFilePersistIer)
 	return appIer
 }
 
@@ -54,7 +63,9 @@ var PromptApp = NewPromptApp()
 
 var UserApp = NewUserApp()
 
-var NamespaceApp = NewNamespaceApp()
+var SkillApp = NewSkillApp()
+
+var SkillFileApp = NewSkillFileApp()
 
 var SettingApp = NewSettingApp()
 

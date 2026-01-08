@@ -172,7 +172,7 @@ const AgentChat = forwardRef<AgentChatRef, AgentChatProps>(({ editorAreaRef, col
   }), [setAgentMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !(e.nativeEvent as any).isComposing) {
       e.preventDefault();
       handleSendMessage();
     }

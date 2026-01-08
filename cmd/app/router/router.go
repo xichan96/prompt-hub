@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/xichan96/prompt-hub/cmd/app/handler"
+	"github.com/xichan96/prompt-hub/cmd/app/mcphandler"
 	"github.com/xichan96/prompt-hub/cmd/app/middleware"
 )
 
@@ -20,13 +21,13 @@ func RegisterAPIRouter(r *gin.Engine) {
 			users.DELETE("/:user_id", middleware.AdminRoleMiddleware(), handler.DeleteUserAPI)
 		}
 
-		namespaces := api.Group("/namespaces", middleware.Auth())
+		skills := api.Group("/skills", middleware.Auth())
 		{
-			namespaces.POST("", handler.CreateNamespaceAPI)
-			namespaces.GET("", handler.GetNamespacesAPI)
-			namespaces.PUT("/:namespace_id", handler.UpdateNamespaceAPI)
-			namespaces.DELETE("/:namespace_id", handler.DeleteNamespaceAPI)
-			promptRouter := namespaces.Group("/:namespace_id/prompts", middleware.NamespaceAccessMiddleware())
+			skills.POST("", handler.CreateSkillAPI)
+			skills.GET("", handler.GetSkillsAPI)
+			skills.PUT("/:skill_id", handler.UpdateSkillAPI)
+			skills.DELETE("/:skill_id", handler.DeleteSkillAPI)
+			promptRouter := skills.Group("/:skill_id/prompts", middleware.SkillAccessMiddleware())
 			{
 				promptRouter.POST("", handler.CreatePromptAPI)
 				promptRouter.GET("", handler.GetPromptListAPI)
@@ -34,6 +35,15 @@ func RegisterAPIRouter(r *gin.Engine) {
 				promptRouter.POST("/:prompt_id/publish", handler.PublishPromptAPI)
 				promptRouter.DELETE("/:prompt_id", handler.DeletePromptAPI)
 				promptRouter.GET("/:prompt_id", handler.GetPromptAPI)
+			}
+
+			fileRouter := skills.Group("/:skill_id/files", middleware.SkillAccessMiddleware())
+			{
+				fileRouter.POST("", handler.CreateSkillFileAPI)
+				fileRouter.GET("", handler.GetSkillFileListAPI)
+				fileRouter.PUT("/:file_id", handler.UpdateSkillFileAPI)
+				fileRouter.DELETE("/:file_id", handler.DeleteSkillFileAPI)
+				fileRouter.GET("/:file_id", handler.GetSkillFileAPI)
 			}
 		}
 
@@ -58,5 +68,11 @@ func RegisterAPIRouter(r *gin.Engine) {
 			agent.POST("/chat", handler.AgentChatAPI)
 			agent.POST("/chat/stream", handler.AgentStreamChatAPI)
 		}
+	}
+
+	mcp := r.Group("/mcp")
+	{
+		h := mcphandler.NewMcpHandler()
+		mcp.Any("/*path", gin.WrapH(h))
 	}
 }

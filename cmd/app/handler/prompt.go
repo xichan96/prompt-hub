@@ -10,14 +10,14 @@ import (
 
 // CreatePromptAPI       创建提示词 godoc
 // @Summary               创建提示词
-// @Description           在指定命名空间下创建新提示词
+// @Description           在指定技能下创建新提示词
 // @Tags                  提示词管理
 // @Accept                json
 // @Produce               json
-// @Param                 namespace_id    path        string                  true    "命名空间ID"
+// @Param                 skill_id    path        string                  true    "技能ID"
 // @Param                 body            body        appdto.CreatePromptDraftReq true    "提示词信息"
 // @Success               200             {object}    appdto.CreateIDResponse  "创建成功"
-// @Router                /api/namespaces/:namespace_id/prompts [post]
+// @Router                /api/skills/:skill_id/prompts [post]
 func CreatePromptAPI(c *gin.Context) {
 	var req appdto.CreatePromptDraftReq
 	if err := c.ShouldBindUri(&req); err != nil {
@@ -42,11 +42,11 @@ func CreatePromptAPI(c *gin.Context) {
 // @Tags                  提示词管理
 // @Accept                json
 // @Produce               json
-// @Param                 namespace_id    path        string                  true    "命名空间ID"
+// @Param                 skill_id    path        string                  true    "技能ID"
 // @Param                 prompt_id        path        string                  true    "提示词ID"
 // @Param                 body            body        appdto.UpdatePromptDraftReq true    "提示词信息"
 // @Success               200             {object}    appdto.EmptyResponse         "更新成功"
-// @Router                /api/namespaces/:namespace_id/prompts/:prompt_id [put]
+// @Router                /api/skills/:skill_id/prompts/:prompt_id [put]
 func UpdatePromptAPI(c *gin.Context) {
 	var req appdto.UpdatePromptDraftReq
 	if err := c.ShouldBindUri(&req); err != nil {
@@ -71,11 +71,11 @@ func UpdatePromptAPI(c *gin.Context) {
 // @Tags                  提示词管理
 // @Accept                json
 // @Produce               json
-// @Param                 namespace_id    path        string                  true    "命名空间ID"
+// @Param                 skill_id    path        string                  true    "技能ID"
 // @Param                 prompt_id       path        string                  true    "提示词ID"
 // @Param                 body            body        appdto.PublishPromptReq  true    "发布信息"
 // @Success               200             {object}    appdto.EmptyResponse "发布成功"
-// @Router                /api/namespaces/:namespace_id/prompts/:prompt_id/publish [post]
+// @Router                /api/skills/:skill_id/prompts/:prompt_id/publish [post]
 func PublishPromptAPI(c *gin.Context) {
 	var req appdto.PublishPromptReq
 	if err := c.ShouldBindUri(&req); err != nil {
@@ -100,10 +100,10 @@ func PublishPromptAPI(c *gin.Context) {
 // @Tags                  提示词管理
 // @Accept                json
 // @Produce               json
-// @Param                 namespace_id    path        string          true    "命名空间ID"
+// @Param                 skill_id    path        string          true    "技能ID"
 // @Param                 prompt_id        path        string          true    "提示词ID"
 // @Success               200             {object}    appdto.EmptyResponse         "删除成功"
-// @Router                /api/namespaces/:namespace_id/prompts/:prompt_id [delete]
+// @Router                /api/skills/:skill_id/prompts/:prompt_id [delete]
 func DeletePromptAPI(c *gin.Context) {
 	var req appdto.DeletePromptReq
 	if err := c.ShouldBindUri(&req); err != nil {
@@ -124,10 +124,10 @@ func DeletePromptAPI(c *gin.Context) {
 // @Tags                  提示词管理
 // @Accept                json
 // @Produce               json
-// @Param                 namespace_id    path        string          true    "命名空间ID"
+// @Param                 skill_id    path        string          true    "技能ID"
 // @Param                 prompt_id        path        string          true    "提示词ID"
 // @Success               200             {object}    appdto.PromptResponse  "获取成功"
-// @Router                /api/namespaces/:namespace_id/prompts/:prompt_id [get]
+// @Router                /api/skills/:skill_id/prompts/:prompt_id [get]
 func GetPromptAPI(c *gin.Context) {
 	var req appdto.GetPromptReq
 	if err := c.ShouldBindUri(&req); err != nil {
@@ -144,15 +144,15 @@ func GetPromptAPI(c *gin.Context) {
 
 // GetPromptListAPI   获取提示词列表 godoc
 // @Summary                     获取提示词列表
-// @Description                 获取指定命名空间和名称下的提示词列表
+// @Description                 获取指定技能和名称下的提示词列表
 // @Tags                        提示词管理
 // @Accept                      json
 // @Produce                     json
-// @Param                       namespace_id    path        string          true    "命名空间ID"
+// @Param                       skill_id    path        string          true    "技能ID"
 // @Param                       name            query       string          false   "提示词名称"
 // @Param                       status          query       string          false   "状态"
 // @Success                     200             {object}    appdto.PromptListResponse  "获取成功"
-// @Router                      /api/namespaces/:namespace_id/prompts [get]
+// @Router                      /api/skills/:skill_id/prompts [get]
 func GetPromptListAPI(c *gin.Context) {
 	var req appdto.GetPromptReq
 	if err := c.ShouldBindUri(&req); err != nil {
@@ -163,7 +163,7 @@ func GetPromptListAPI(c *gin.Context) {
 		gx.JSONErr(c, gx.BErr(err))
 		return
 	}
-	prompts, err := di.PromptApp.GetPromptList(c, req.NamespaceID, req.Name, req.Status)
+	prompts, err := di.PromptApp.GetPromptList(c, req.SkillID, req.Name, req.Status)
 	if err != nil {
 		gx.JSONErr(c, err)
 		return

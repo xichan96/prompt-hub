@@ -2,6 +2,7 @@ import { Button, Dropdown } from 'antd';
 import { FileTextOutlined } from '@ant-design/icons';
 import { extractCodeBlocks } from '@/utils/promptDetector';
 import styles from './index.module.scss';
+import { useI18n } from '@/hooks/useI18n';
 
 interface CodeBlockActionsProps {
   content: string;
@@ -9,6 +10,7 @@ interface CodeBlockActionsProps {
 }
 
 export default function CodeBlockActions({ content, onApply }: CodeBlockActionsProps) {
+  const { t } = useI18n();
   const extracted = extractCodeBlocks(content);
 
   if (extracted.length === 0) {
@@ -20,7 +22,7 @@ export default function CodeBlockActions({ content, onApply }: CodeBlockActionsP
         onClick={() => onApply(content.trim())}
         className={styles.inlineApplyButton}
       >
-        应用
+        {t('common.apply', '应用')}
       </Button>
     );
   }
@@ -34,7 +36,7 @@ export default function CodeBlockActions({ content, onApply }: CodeBlockActionsP
         onClick={() => onApply(extracted[0].content)}
         className={styles.inlineApplyButton}
       >
-        应用代码块
+        {t('agentChat.applyCodeBlock', '应用代码块')}
       </Button>
     );
   }
@@ -64,7 +66,7 @@ export default function CodeBlockActions({ content, onApply }: CodeBlockActionsP
         icon={<FileTextOutlined />}
         className={styles.inlineApplyButton}
       >
-        应用代码块 ({extracted.length})
+        {t('agentChat.applyCodeBlock', '应用代码块')} ({extracted.length})
       </Button>
     </Dropdown>
   );

@@ -15,8 +15,8 @@ export interface UserInfo {
   id: string;
   username: string;
   role: UserRole;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const login = (data: LoginRequest) => request.post<LoginResponse>('/login', data);

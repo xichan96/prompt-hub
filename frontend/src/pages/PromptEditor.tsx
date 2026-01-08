@@ -5,7 +5,7 @@ import { useI18n } from '@/hooks/useI18n';
 
 export default function PromptEditor() {
   const {
-    namespaceId,
+    skillId,
     promptId,
     prompt,
     content,
@@ -28,7 +28,7 @@ export default function PromptEditor() {
       content={content}
       onContentChange={setContent}
       onPublish={() => {}}
-      namespaceId={namespaceId || ''}
+      skillId={skillId || ''}
       promptId={promptId}
       showVersionList
     />

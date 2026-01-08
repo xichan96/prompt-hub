@@ -7,11 +7,11 @@ import (
 	"gorm.io/gen/field"
 )
 
-const TableNamespace = "namespace"
+const TableSkill = "skill"
 
-var NamespaceFM = sql.NewGlobalFieldMetaMapping(Namespace{}, NamespaceFieldMeta{})
+var SkillFM = sql.NewGlobalFieldMetaMapping(Skill{}, SkillFieldMeta{})
 
-type Namespace struct {
+type Skill struct {
 	ID          string    `json:"id" gorm:"column:id;type:varchar(36);primaryKey;comment:id"`
 	Name        string    `json:"name" gorm:"column:name;type:varchar(255);not null;comment:name"`
 	Description string    `json:"description" gorm:"column:description;type:text;not null;comment:description"`
@@ -20,11 +20,11 @@ type Namespace struct {
 	UpdatedAt   time.Time `json:"updated_at" gorm:"column:updated_at;type:datetime;not null;default:CURRENT_TIMESTAMP"`
 }
 
-func (Namespace) TableName() string {
-	return TableNamespace
+func (Skill) TableName() string {
+	return TableSkill
 }
 
-type NamespaceFieldMeta struct {
+type SkillFieldMeta struct {
 	sql.CTable
 	ALL         field.Asterisk
 	ID          field.String

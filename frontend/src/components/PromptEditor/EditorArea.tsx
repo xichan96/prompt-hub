@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useImperativeHandle, forwardRef, useCallback } from 'react';
+import { useRef, useEffect, useState, useImperativeHandle, forwardRef, useCallback, useMemo } from 'react';
 import { Button } from 'antd';
 import { ConsoleSqlOutlined } from '@ant-design/icons';
 import Editor, { DiffEditor, OnMount, DiffOnMount } from '@monaco-editor/react';
@@ -23,6 +23,7 @@ export interface CodeReferenceInfo {
 export interface EditorAreaRef {
   navigateToLine: (lineRange: string) => void;
   replaceCode: (content: string, lineRange?: string) => void;
+  insertCode: (content: string) => void;
 }
 
 interface EditorAreaProps {
@@ -34,7 +35,9 @@ interface EditorAreaProps {
   modifiedContent?: string;
   hasPublished?: boolean;
   onAddToChat?: (content: string | CodeReferenceInfo) => void;
+  onSave?: () => void;
   fileName?: string;
+  language?: string;
 }
 
 const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({ 
@@ -46,7 +49,9 @@ const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({
   modifiedContent = '',
   hasPublished = false,
   onAddToChat,
-  fileName = 'editor'
+  onSave,
+  fileName = 'editor',
+  language = 'markdown'
 }, ref) => {
   const { t } = useI18n();
   const { theme } = useThemeStore();
@@ -58,7 +63,7 @@ const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const navigateTimeoutsRef = useRef<{ focus?: NodeJS.Timeout; highlight?: NodeJS.Timeout }>({});
 
-  const commonOptions = {
+  const commonOptions = useMemo(() => ({
     minimap: { enabled: false },
     fontSize: 14,
     lineNumbers: 'on' as const,
@@ -67,7 +72,7 @@ const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({
     automaticLayout: true,
     tabSize: 2,
     renderWhitespace: 'selection' as const,
-  };
+  }), []);
 
   const updateSelectedText = (editor: monaco.editor.IStandaloneCodeEditor) => {
     const selection = editor.getSelection();
@@ -122,10 +127,24 @@ const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({
         updateSelectedText(modifiedEditor);
       }
     });
+
+    if (onSave) {
+      modifiedEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+        onSave();
+      });
+    }
   };
 
   const handleEditorMount: OnMount = (editor) => {
     editorRef.current = editor;
+    editor.updateOptions({ readOnly: false });
+    
+    editor.onDidChangeModelContent(() => {
+      const value = editor.getValue();
+      if (value !== content) {
+        onContentChange(value);
+      }
+    });
     
     editor.onDidChangeCursorSelection(() => {
       updateSelectedText(editor);
@@ -136,6 +155,16 @@ const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({
         updateSelectedText(editor);
       }
     });
+    
+    if (onSave) {
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+        onSave();
+      });
+    }
+
+    setTimeout(() => {
+      editor.focus();
+    }, 50);
   };
 
   const getActiveEditor = useCallback(() => {
@@ -219,7 +248,8 @@ const EditorArea = forwardRef<EditorAreaRef, EditorAreaProps>(({
       navigateTimeoutsRef.current.highlight = undefined;
     }, 2000);
   }, [getActiveEditor]);
-const replaceCode = useCallback((content: string, lineRange?: string) => {
+
+  const replaceCode = useCallback((content: string, lineRange?: string) => {
     const editor = getActiveEditor();
     if (!editor) return;
 
@@ -264,173 +294,146 @@ const replaceCode = useCallback((content: string, lineRange?: string) => {
       }
     }
 
-    if (range) {
-      editor.executeEdits('agent-apply', [{
-        range: range,
+    editor.executeEdits('replace-code', [
+      {
+        range,
         text: content,
-        forceMoveMarkers: true
-      }]);
-      editor.focus();
+        forceMoveMarkers: true,
+      },
+    ]);
+  }, [getActiveEditor]);
+
+  const insertCode = useCallback((text: string) => {
+    const editor = getActiveEditor();
+    if (!editor) return;
+
+    const selection = editor.getSelection();
+    if (selection) {
+      editor.executeEdits('insert-code', [
+        {
+          range: selection,
+          text: text,
+          forceMoveMarkers: true,
+        },
+      ]);
+    } else {
+      // If no selection, append to end or insert at cursor? 
+      // getSelection usually returns cursor position if no range selected.
+      // If truly no selection, append to end.
+      const model = editor.getModel();
+      if (model) {
+        const lineCount = model.getLineCount();
+        const lastLineLength = model.getLineLength(lineCount);
+        const range = new monaco.Range(lineCount, lastLineLength + 1, lineCount, lastLineLength + 1);
+        editor.executeEdits('insert-code', [
+          {
+            range: range,
+            text: text,
+            forceMoveMarkers: true,
+          },
+        ]);
+      }
     }
   }, [getActiveEditor]);
 
   useImperativeHandle(ref, () => ({
     navigateToLine,
     replaceCode,
-  }), [navigateToLine, replaceCode]);
+    insertCode,
+  }));
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        const saveAction = actions.find(a => a.label.includes('保存'));
-        if (saveAction) {
-          saveAction.onClick();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [actions]);
-
-  useEffect(() => {
-    if (showDiff && diffEditorRef.current && hasPublished) {
-      const modifiedEditor = diffEditorRef.current.getModifiedEditor();
-      const currentValue = modifiedEditor.getValue();
-      if (currentValue !== modifiedContent) {
-        modifiedEditor.setValue(modifiedContent);
-      }
-    }
-  }, [modifiedContent, showDiff, hasPublished, content]);
-
-  useEffect(() => {
-    if (!selectedText.trim()) return;
-
-    const updatePosition = () => {
-      const editor = showDiff 
-        ? diffEditorRef.current?.getModifiedEditor() 
-        : editorRef.current;
-      
-      if (editor && selectedText.trim()) {
-        updateSelectedText(editor);
-      }
-    };
-
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
-
-    return () => {
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [selectedText, showDiff]);
-
-  // 清理 navigateToLine 的 timeout
-  useEffect(() => {
-    return () => {
-      if (navigateTimeoutsRef.current.focus) {
-        clearTimeout(navigateTimeoutsRef.current.focus);
-      }
-      if (navigateTimeoutsRef.current.highlight) {
-        clearTimeout(navigateTimeoutsRef.current.highlight);
-      }
-    };
-  }, []);
-
-  const handleAddToChat = () => {
-    if (onAddToChat && selectedText.trim() && selectedRange) {
-      const lineRange = selectedRange.startLine === selectedRange.endLine 
-        ? `${selectedRange.startLine}` 
-        : `${selectedRange.startLine}-${selectedRange.endLine}`;
-      
-      const codeRef: CodeReferenceInfo = {
+  const handleChatClick = () => {
+    if (selectedText && onAddToChat) {
+      onAddToChat({
         fileName,
-        lineRange,
-        content: selectedText,
-      };
-      
-      onAddToChat(codeRef);
+        lineRange: selectedRange ? `${selectedRange.startLine}-${selectedRange.endLine}` : '',
+        content: selectedText
+      });
+      setSelectedText('');
+      setButtonPosition(null);
     }
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (buttonPosition && editorContainerRef.current && !editorContainerRef.current.contains(event.target as Node)) {
+        setButtonPosition(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [buttonPosition]);
+
   return (
-    <div className={styles.editorArea}>
+    <div className={styles.editorArea} ref={editorContainerRef}>
+      <div className={styles.editorContainer}>
+        {showDiff ? (
+          <DiffEditor
+            height="100%"
+            language={language}
+            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+            original={originalContent}
+            modified={modifiedContent}
+            options={{
+              ...commonOptions,
+              readOnly: false,
+              originalEditable: false,
+              renderSideBySide: false,
+            }}
+            onMount={handleDiffEditorMount}
+          />
+        ) : (
+          <Editor
+            height="100%"
+            language={language}
+            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+            value={content}
+            onChange={(value) => onContentChange(value || '')}
+            options={{
+              ...commonOptions,
+              readOnly: false,
+            }}
+            onMount={handleEditorMount}
+          />
+        )}
+        {buttonPosition && (
+          <div
+            style={{
+              position: 'fixed',
+              top: buttonPosition.top,
+              left: buttonPosition.left,
+              zIndex: 1000,
+            }}
+          >
+            <Button
+              type="primary"
+              size="small"
+              icon={<ConsoleSqlOutlined />}
+              onClick={handleChatClick}
+              className={styles.chatButton}
+            >
+              {t('promptEditor.addToChat', '添加到聊天')}
+            </Button>
+          </div>
+        )}
+      </div>
       {actions.length > 0 && (
-        <div className={styles.editorHeader}>
+        <div className={styles.actions}>
           {actions.map((action, index) => (
             <Button
               key={index}
-              type={action.type || 'default'}
               onClick={action.onClick}
               loading={action.loading}
+              type={action.type || 'default'}
             >
               {action.label}
             </Button>
           ))}
         </div>
       )}
-      <div className={styles.editor} ref={editorContainerRef}>
-        {showDiff ? (
-          hasPublished ? (
-            <DiffEditor
-              height="100%"
-              language="markdown"
-              theme="vs-dark"
-              original={originalContent}
-              modified={modifiedContent}
-              onMount={handleDiffEditorMount}
-              options={{
-                ...commonOptions,
-                renderSideBySide: false,
-                readOnly: false,
-              } as any}
-            />
-          ) : (
-            <div className={styles.noPublished}>
-              <div className={styles.noPublishedText}>{t('promptEditor.unpublished', '未发布')}</div>
-            </div>
-          )
-        ) : (
-          <Editor
-            height="100%"
-            language="markdown"
-            theme={theme === 'dark' ? 'vs-dark' : 'light'}
-            value={content}
-            onChange={(value) => onContentChange(value || '')}
-            onMount={handleEditorMount}
-            options={{
-              ...commonOptions,
-              formatOnPaste: true,
-              formatOnType: true,
-            }}
-          />
-        )}
-        {onAddToChat && buttonPosition && selectedText.trim() && (
-          <div
-            className={styles.floatingAddButton}
-            style={{
-              position: 'fixed',
-              top: `${buttonPosition.top}px`,
-              left: `${buttonPosition.left}px`,
-              zIndex: 1000,
-            }}
-          >
-            <button
-              className={styles.terminalButton}
-              onClick={handleAddToChat}
-              title={t('promptEditor.addToChatTitle', '将选中内容添加到聊天')}
-            >
-              <span className={styles.terminalIcon}>
-                <ConsoleSqlOutlined />
-              </span>
-              <span className={styles.terminalText}>{t('promptEditor.addToChat', '添加到聊天')}</span>
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 });
